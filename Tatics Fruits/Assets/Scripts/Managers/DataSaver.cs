@@ -68,19 +68,14 @@ namespace Managers
         {
             _databaseReference = FirebaseDatabase.DefaultInstance.RootReference;
             _localFilePath = Path.Combine(Application.persistentDataPath, "playerData.json");
-            Debug.Log($"[DataSaver] Local file path: {_localFilePath}");
         }
 
         public void SetUserId(string uid)
         {
             userId = uid;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             Debug.Log($"[DataSaver] UserId set: {userId}");
-            
-            var profileController = FindObjectOfType<Gameplay.Controllers.PlayerProfileController>();
-            if (profileController != null)
-            {
-                profileController.SetFirebaseUserId(uid);
-            }
+#endif
         }
 
         #region Public API
@@ -111,10 +106,7 @@ namespace Managers
         {
             if (!ValidateUserId()) return;
             if (!force && !IsDirty)
-            {
-                Debug.Log("[DataSaver] SaveData ignorado (não está dirty).");
                 return;
-            }
 
             SaveLocal();
             SaveFullToCloud();
@@ -139,7 +131,6 @@ namespace Managers
                 patch["lastUpdatedTicks"] = ticks;
             }
 
-            // aplica no objeto local (para não ficar divergente)
             ApplyPatchLocally(patch);
             SaveLocal();
 
@@ -152,10 +143,7 @@ namespace Managers
                     if (task.IsFaulted)
                         Debug.LogError($"[DataSaver] Erro ao salvar PATCH no Firebase: {task.Exception}");
                     else if (task.IsCompletedSuccessfully)
-                    {
-                        Debug.Log("[DataSaver] PATCH salvo com sucesso no Firebase.");
                         OnSavedToCloud?.Invoke();
-                    }
                 });
 
             IsDirty = false;
@@ -193,8 +181,6 @@ namespace Managers
 
         private IEnumerator LoadDataCoroutine()
         {
-            Debug.Log("[DataSaver] 🔄 Starting data load - Firebase has priority...");
-            
             var serverDataTask = _databaseReference.Child("users").Child(userId).GetValueAsync();
             var localData = LoadLocal();
 
@@ -204,7 +190,7 @@ namespace Managers
 
             if (serverDataTask.IsFaulted)
             {
-                Debug.LogError($"[DataSaver] ❌ Error loading from Firebase: {serverDataTask.Exception}");
+                Debug.LogError($"[DataSaver] Error loading from Firebase: {serverDataTask.Exception}");
                 OnLoadFailed?.Invoke(serverDataTask.Exception);
                 yield break;
             }
@@ -215,18 +201,7 @@ namespace Managers
             {
                 var jsonData = snapshot.GetRawJsonValue();
                 if (!string.IsNullOrEmpty(jsonData))
-                {
                     cloudData = JsonUtility.FromJson<DataToSave>(jsonData);
-                    Debug.Log($"[DataSaver] ☁️ Firebase data loaded - Coins: {cloudData.totalCoins}, Level: {cloudData.crrLevel}");
-                }
-                else
-                {
-                    Debug.Log("[DataSaver] ⚠️ Snapshot exists but contains no JSON data");
-                }
-            }
-            else
-            {
-                Debug.Log("[DataSaver] ℹ️ No Firebase data found for this user");
             }
 
             dataToSave = ResolveDataConflict(localData, cloudData);
@@ -239,25 +214,20 @@ namespace Managers
                 SaveLocal();
                 IsDirty = false;
                 
-                Debug.Log($"[DataSaver] ✅ Data resolved and applied - Final Coins: {dataToSave.totalCoins}");
                 OnDataLoaded?.Invoke(dataToSave);
                 StartRealtimeListener();
                 yield break;
             }
 
-            Debug.Log("[DataSaver] Creating new default profile (no local or cloud data exists)");
             dataToSave = CreateNewDefaultData();
             SaveLocal();
             IsDirty = false;
 
             if (createCloudIfMissing)
-            {
                 SaveFullToCloud();
-            }
 
             OnDataNotFound?.Invoke();
             StartRealtimeListener();
-            yield break;
         }
 
         #endregion
@@ -270,7 +240,6 @@ namespace Managers
                 dataToSave = new DataToSave();
 
             dataToSave.lastUpdatedTicks = DateTime.UtcNow.Ticks;
-
             _isLocalChange = true;
 
             var json = JsonUtility.ToJson(dataToSave);
@@ -288,7 +257,6 @@ namespace Managers
                     }
                     else if (task.IsCompletedSuccessfully)
                     {
-                        Debug.Log("[DataSaver] FULL salvo com sucesso no Firebase.");
                         IsDirty = false;
                         OnSavedToCloud?.Invoke();
                     }
@@ -305,7 +273,6 @@ namespace Managers
             {
                 var json = JsonUtility.ToJson(dataToSave);
                 File.WriteAllText(_localFilePath, json);
-                Debug.Log("[DataSaver] Dados salvos localmente.");
             }
             catch (Exception e)
             {
@@ -318,21 +285,13 @@ namespace Managers
             try
             {
                 if (!File.Exists(_localFilePath))
-                {
-                    Debug.Log("[DataSaver] Nenhum arquivo local encontrado.");
                     return null;
-                }
 
                 var json = File.ReadAllText(_localFilePath);
                 if (string.IsNullOrEmpty(json))
-                {
-                    Debug.Log("[DataSaver] Arquivo local está vazio.");
                     return null;
-                }
 
-                var data = JsonUtility.FromJson<DataToSave>(json);
-                Debug.Log("[DataSaver] Dados locais carregados com sucesso.");
-                return data;
+                return JsonUtility.FromJson<DataToSave>(json);
             }
             catch (Exception e)
             {
@@ -347,25 +306,10 @@ namespace Managers
 
         private DataToSave ResolveDataConflict(DataToSave local, DataToSave cloud)
         {
-            if (local == null && cloud == null)
-            {
-                Debug.Log("[DataSaver] 📭 No data found (neither local nor cloud)");
-                return null;
-            }
-
             if (cloud != null)
-            {
-                Debug.Log($"[DataSaver] ☁️ Firebase data found - Always using cloud data (Firebase has priority) | Coins: {cloud.totalCoins}, Level: {cloud.crrLevel}");
                 return cloud;
-            }
 
-            if (local != null)
-            {
-                Debug.Log($"[DataSaver] 💾 No Firebase data - Using local data as fallback | Coins: {local.totalCoins}, Level: {local.crrLevel}");
-                return local;
-            }
-
-            return null;
+            return local;
         }
 
         private DataToSave CreateNewDefaultData()
@@ -403,15 +347,6 @@ namespace Managers
                 return false;
             }
             return true;
-        }
-
-        public void UpdateDailyLogin(string todayKey)
-        {
-            if (dataToSave != null && dataToSave.lastLoginDayKey != todayKey)
-            {
-                dataToSave.lastLoginDayKey = todayKey;
-                SaveData();
-            }
         }
 
         #endregion
@@ -481,43 +416,22 @@ namespace Managers
 
         public void StartRealtimeListener()
         {
-            
-            if (!enableRealtimeSync)
-            {
-                Debug.Log($"[DataSaver] Real-time listener NOT started - Sync disabled in inspector");
+            if (!enableRealtimeSync || _isListening || !ValidateUserId())
                 return;
-            }
-            
-            if (_isListening)
-            {
-                Debug.Log($"[DataSaver] Real-time listener already active");
-                return;
-            }
-            
-            if (!ValidateUserId())
-            {
-                Debug.LogError($"[DataSaver] Cannot start listener - Invalid user ID");
-                return;
-            }
 
             var userRef = _databaseReference.Child("users").Child(userId);
-
             userRef.ValueChanged += OnFirebaseValueChanged;
             _isListening = true;
-            
-            Debug.Log($"[DataSaver] 🔔 Real-time listener STARTED for user: {userId}");
         }
 
         public void StopRealtimeListener()
         {
-            if (!_isListening  || !ValidateUserId())
+            if (!_isListening || !ValidateUserId())
                 return;
             
             var userRef = _databaseReference.Child("users").Child(userId);
             userRef.ValueChanged -= OnFirebaseValueChanged;
             _isListening = false;
-            
-            Debug.Log("[DataSaver] 🔕 Real-time listener STOPPED");
         }
 
         private void OnFirebaseValueChanged(object sender, ValueChangedEventArgs args)
@@ -531,59 +445,49 @@ namespace Managers
             if (_isLocalChange)
             {
                 _isLocalChange = false;
-                Debug.Log("[DataSaver] Ignoring self-triggered Firebase change");
                 return;
             }
 
             var snapshot = args.Snapshot;
             if (snapshot == null || !snapshot.Exists)
-            {
-                Debug.LogWarning("[DataSaver] Firebase data was deleted remotely");
                 return;
-            }
             
             var jsonData = snapshot.GetRawJsonValue();
             if (string.IsNullOrEmpty(jsonData))
-            {
-                Debug.LogWarning("[DataSaver] Firebase data is empty");
                 return;
-            }
             
             var remoteData = JsonUtility.FromJson<DataToSave>(jsonData);
 
             if (smartMerger)
-            {
                 ApplyRemoteChanges(remoteData);
-            }
             else
             {
                 dataToSave = remoteData;
                 SaveLocal();
                 OnRemoteDataChanged?.Invoke(dataToSave);
             }
-            
-            Debug.Log($"[DataSaver] ✅ Remote changes applied - New Coins: {dataToSave.totalCoins}, New Level: {dataToSave.crrLevel}");
         }
 
         private void ApplyRemoteChanges(DataToSave remoteData)
         {
-            var remoteDiff = remoteData.lastUpdatedTicks - dataToSave.lastUpdatedTicks;
-            var remoteTime = new DateTime(remoteData.lastUpdatedTicks);
-            var localTime = new DateTime(dataToSave.lastUpdatedTicks);
-            
-            if (remoteData.lastUpdatedTicks > dataToSave.lastUpdatedTicks)
-            {
-                dataToSave = remoteData;
-                SaveLocal();
-                OnRemoteDataChanged?.Invoke(dataToSave);
-            }
-            else
-            {
+            if (remoteData.lastUpdatedTicks <= dataToSave.lastUpdatedTicks)
                 return;
-            }
+
+            dataToSave = remoteData;
+            SaveLocal();
+            OnRemoteDataChanged?.Invoke(dataToSave);
         }
 
         #endregion
+
+        public void UpdateDailyLogin(string todayKey)
+        {
+            if (dataToSave != null && dataToSave.lastLoginDayKey != todayKey)
+            {
+                dataToSave.lastLoginDayKey = todayKey;
+                SaveData();
+            }
+        }
 
         #region Debug & Testing Utilities
 

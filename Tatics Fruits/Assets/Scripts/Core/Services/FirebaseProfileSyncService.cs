@@ -39,6 +39,9 @@ namespace Core.Services
         [SerializeField] private string userId;
         [SerializeField] public DataToSave dataToSave = new DataToSave();
 
+        [Header("References")]
+        [SerializeField] private PlayerProfileController _profileController;
+
         private DatabaseReference _databaseReference;
         private string _localFilePath;
 
@@ -49,8 +52,12 @@ namespace Core.Services
         private void Awake()
         {
             _databaseReference = FirebaseDatabase.DefaultInstance.RootReference;
-            
             _localFilePath = Path.Combine(Application.persistentDataPath, "playerData.json");
+        }
+
+        public void SetProfileController(PlayerProfileController controller)
+        {
+            _profileController = controller;
         }
 
         /// <summary>
@@ -75,13 +82,7 @@ namespace Core.Services
                 .ContinueWith(task =>
                 {
                     if (task.IsFaulted)
-                    {
                         Debug.LogError($"[DataSaver] Erro ao salvar dados no Firebase: {task.Exception}");
-                    }
-                    else if (task.IsCompletedSuccessfully)
-                    {
-                        Debug.Log("[DataSaver] Dados salvos com sucesso no Firebase.");
-                    }
                 });
         }
 
@@ -89,9 +90,8 @@ namespace Core.Services
         {
             userId = uid;
 
-            var profileController = FindObjectOfType<PlayerProfileController>();
-            if (profileController != null)
-                profileController.SetFirebaseUserId(uid);
+            if (_profileController != null)
+                _profileController.SetFirebaseUserId(uid);
         }
 
         /// <summary>
@@ -105,10 +105,7 @@ namespace Core.Services
 
         private IEnumerator LoadDataCoroutine()
         {
-            Debug.Log("[FirebaseProfileSync] 🔄 Starting data load - Firebase has priority...");
-            
             var serverDataTask = _databaseReference.Child("users").Child(userId).GetValueAsync();
-
             var localData = LoadLocal();
 
             yield return new WaitUntil(() => serverDataTask.IsCompleted);
@@ -117,7 +114,7 @@ namespace Core.Services
 
             if (serverDataTask.IsFaulted)
             {
-                Debug.LogError($"[FirebaseProfileSync] ❌ Error loading from Firebase: {serverDataTask.Exception}");
+                Debug.LogError($"[FirebaseProfileSync] Error loading from Firebase: {serverDataTask.Exception}");
                 OnLoadFailed?.Invoke(serverDataTask.Exception);
             }
             else
@@ -127,20 +124,8 @@ namespace Core.Services
                 if (snapshot != null && snapshot.Exists)
                 {
                     var jsonData = snapshot.GetRawJsonValue();
-
                     if (!string.IsNullOrEmpty(jsonData))
-                    {
                         cloudData = JsonUtility.FromJson<DataToSave>(jsonData);
-                        Debug.Log($"[FirebaseProfileSync] ☁️ Firebase data loaded - Coins: {cloudData.totalCoins}, Level: {cloudData.crrLevel}");
-                    }
-                    else
-                    {
-                        Debug.Log("[FirebaseProfileSync] ⚠️ Snapshot exists but contains no JSON data");
-                    }
-                }
-                else
-                {
-                    Debug.Log("[FirebaseProfileSync] ℹ️ No Firebase data found for this user");
                 }
             }
 
@@ -148,60 +133,58 @@ namespace Core.Services
 
             if (dataToSave != null)
             {
-
                 if (dataToSave.lastUpdatedTicks == 0)
                     dataToSave.lastUpdatedTicks = DateTime.UtcNow.Ticks;
 
                 SaveLocal();
-                var json = JsonUtility.ToJson(dataToSave);
-                _databaseReference.Child("users").Child(userId).SetRawJsonValueAsync(json);
+                _databaseReference.Child("users").Child(userId).SetRawJsonValueAsync(JsonUtility.ToJson(dataToSave));
 
                 OnDataLoaded?.Invoke(dataToSave);
 
-                var profileController = FindObjectOfType<PlayerProfileController>();
-                if (profileController != null && profileController.Data != null)
-                {
-                    Debug.Log($"[FirebaseProfileSync] 📥 Applying data to PlayerProfile - Coins: {dataToSave.totalCoins}, Level: {dataToSave.crrLevel}");
-                    
-                    profileController.Data.playerName = dataToSave.userName;
-                    profileController.Data.gold = dataToSave.totalCoins;
-                    profileController.Data.currentLevelIndex = dataToSave.crrLevel;
-                    profileController.Data.highestLevelUnlocked = dataToSave.highScore;
-
-                    if (dataToSave.ownedCards != null)
-                        profileController.Data.ownedCards = new List<string>(dataToSave.ownedCards);
-
-                    if (dataToSave.equippedDeck != null)
-                        profileController.Data.equippedDeck = new List<string>(dataToSave.equippedDeck);
-
-                    if (dataToSave.unlockedAvatar != null)
-                        profileController.Data.unlockedAvatars = new List<int>(dataToSave.unlockedAvatar);
-
-                    if (dataToSave.purchasedAvatar != null)
-                        profileController.Data.purchasedAvatars = new List<int>(dataToSave.purchasedAvatar);
-
-                    if (dataToSave.bestScores != null)
-                        profileController.Data.BestScores = new Dictionary<string, int>(dataToSave.bestScores);
-
-                    profileController.Data.musicOn = dataToSave.musicOn;
-                    profileController.Data.sfxOn = dataToSave.sfxOn;
-                    profileController.Data.vfxOn = dataToSave.vfxOn;
-                    profileController.Data.language = dataToSave.language;
-                    profileController.Data.firebaseUserId = userId;
-                    profileController.SetFirebaseUserId(userId);
-
-                    if (profileController.Data.daily != null)
-                    {
-                        profileController.Data.daily.dayKey = dataToSave.dailyDayKey ?? "";
-                        if (profileController.Data.daily.login != null)
-                            profileController.Data.daily.login.lastClaimDayKey = dataToSave.lastLoginDayKey ?? "";
-                    }
-
-                    profileController.SaveProfile();
-                    
-                    Debug.Log($"[FirebaseProfileSync] ✅ Profile fully synced - Final Coins: {profileController.Data.gold}");
-                }
+                ApplyCloudDataToProfile(dataToSave);
             }
+        }
+
+        private void ApplyCloudDataToProfile(DataToSave data)
+        {
+            if (_profileController == null || _profileController.Data == null)
+                return;
+
+            _profileController.Data.playerName = data.userName;
+            _profileController.Data.gold = data.totalCoins;
+            _profileController.Data.currentLevelIndex = data.crrLevel;
+            _profileController.Data.highestLevelUnlocked = data.highScore;
+
+            if (data.ownedCards != null)
+                _profileController.Data.ownedCards = new List<string>(data.ownedCards);
+
+            if (data.equippedDeck != null)
+                _profileController.Data.equippedDeck = new List<string>(data.equippedDeck);
+
+            if (data.unlockedAvatar != null)
+                _profileController.Data.unlockedAvatars = new List<int>(data.unlockedAvatar);
+
+            if (data.purchasedAvatar != null)
+                _profileController.Data.purchasedAvatars = new List<int>(data.purchasedAvatar);
+
+            if (data.bestScores != null)
+                _profileController.Data.BestScores = new Dictionary<string, int>(data.bestScores);
+
+            _profileController.Data.musicOn = data.musicOn;
+            _profileController.Data.sfxOn = data.sfxOn;
+            _profileController.Data.vfxOn = data.vfxOn;
+            _profileController.Data.language = data.language;
+            _profileController.Data.firebaseUserId = userId;
+            _profileController.SetFirebaseUserId(userId);
+
+            if (_profileController.Data.daily != null)
+            {
+                _profileController.Data.daily.dayKey = data.dailyDayKey ?? "";
+                if (_profileController.Data.daily.login != null)
+                    _profileController.Data.daily.login.lastClaimDayKey = data.lastLoginDayKey ?? "";
+            }
+
+            _profileController.SaveProfile();
         }
 
         #region Local JSON
@@ -215,6 +198,7 @@ namespace Core.Services
             }
             catch (Exception e)
             {
+                Debug.LogError($"[FirebaseProfileSync] Failed to write local save file: {e}");
             }
         }
 
@@ -223,21 +207,17 @@ namespace Core.Services
             try
             {
                 if (!File.Exists(_localFilePath))
-                {
                     return null;
-                }
 
                 var json = File.ReadAllText(_localFilePath);
                 if (string.IsNullOrEmpty(json))
-                {
                     return null;
-                }
 
-                var data = JsonUtility.FromJson<DataToSave>(json);
-                return data;
+                return JsonUtility.FromJson<DataToSave>(json);
             }
             catch (Exception e)
             {
+                Debug.LogError($"[FirebaseProfileSync] Failed to read local save file: {e}");
                 return null;
             }
         }
@@ -248,25 +228,10 @@ namespace Core.Services
 
         private DataToSave ResolveDataConflict(DataToSave local, DataToSave cloud)
         {
-            if (local == null && cloud == null)
-            {
-                Debug.Log("[FirebaseProfileSync] 📭 No data found (neither local nor cloud)");
-                return null;
-            }
-            
             if (cloud != null)
-            {
-                Debug.Log($"[FirebaseProfileSync] ☁️ Firebase data found - Always using cloud data (Firebase has priority) | Coins: {cloud.totalCoins}, Level: {cloud.crrLevel}");
                 return cloud;
-            }
 
-            if (local != null)
-            {
-                Debug.Log($"[FirebaseProfileSync] 💾 No Firebase data - Using local data as fallback | Coins: {local.totalCoins}, Level: {local.crrLevel}");
-                return local;
-            }
-            
-            return null;
+            return local;
         }
 
         private DataToSave CreateNewDefaultData()
@@ -404,20 +369,20 @@ namespace Core.Services
 
         public bool IsVipActive()
         {
-            if(!dataToSave.isVip)
+            if (!dataToSave.isVip)
                 return false;
 
             if (dataToSave.vipExpirationTicks == 0)
                 return true;
-            
-            var currentTicks = DateTime.Now.Ticks;
-            var isActive = currentTicks < dataToSave.vipExpirationTicks;
+
+            bool isActive = DateTime.UtcNow.Ticks < dataToSave.vipExpirationTicks;
 
             if (!isActive)
             {
                 dataToSave.isVip = false;
                 SaveData();
             }
+
             return isActive;
         }
 

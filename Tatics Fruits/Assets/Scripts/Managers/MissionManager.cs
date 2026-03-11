@@ -1,19 +1,29 @@
 using System.Collections.Generic;
+using Gameplay.Controllers;
 using UnityEngine;
 
-namespace DefaultNamespace
+namespace Managers
 {
     public class MissionManager : MonoBehaviour
     {
-        public static MissionManager Instance;
-        public List<Mission> _activeMissions = new List<Mission>();
+        [SerializeField] private PlayerProfileController profileController;
+
+        public static MissionManager Instance { get; private set; }
+
+        private readonly List<DefaultNamespace.Mission> _activeMissions = new List<DefaultNamespace.Mission>();
+
+        public IReadOnlyList<DefaultNamespace.Mission> ActiveMissions => _activeMissions;
 
         private void Awake()
         {
-            if (Instance == null)
+            if (Instance != null && Instance != this)
             {
-                Instance = this;
+                Destroy(gameObject);
+                return;
             }
+
+            Instance = this;
+            DontDestroyOnLoad(gameObject);
         }
 
         private void Start()
@@ -21,22 +31,52 @@ namespace DefaultNamespace
             GenerateMissions();
         }
 
-        void GenerateMissions()
+        private void OnDestroy()
         {
+            UnsubscribeAll();
+        }
+
+        private void UnsubscribeAll()
+        {
+            foreach (var mission in _activeMissions)
+                mission.OnMissionCompleted -= HandleMissionCompleted;
+        }
+
+        public void GenerateMissions()
+        {
+            UnsubscribeAll();
             _activeMissions.Clear();
-            _activeMissions.Add(new Mission("Marque 5000 pontos", "Faça 5000 pontos na partida", MissionType.ScorePoints, 5000, 100, "Gold"));
-            _activeMissions.Add(new Mission("Jogue 3 partidas", "Complete 3 partidas", MissionType.PlayXMatches, 3, 1, "NewCard"));
+
+            _activeMissions.Add(new DefaultNamespace.Mission("Marque 5000 pontos", "Faça 5000 pontos na partida", DefaultNamespace.MissionType.ScorePoints, 5000, 100, "Gold"));
+            _activeMissions.Add(new DefaultNamespace.Mission("Jogue 3 partidas", "Complete 3 partidas", DefaultNamespace.MissionType.PlayXMatches, 3, 1, "NewCard"));
 
             foreach (var mission in _activeMissions)
                 mission.OnMissionCompleted += HandleMissionCompleted;
         }
 
-        void HandleMissionCompleted(Mission mission)
+        private void HandleMissionCompleted(DefaultNamespace.Mission mission)
         {
-            Debug.Log($"Missão concluída: {mission._missionName}! Recompensa: {mission._rewardAmount} {mission._rewardType}");
+            if (profileController == null)
+            {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                Debug.LogWarning("[MissionManager] ProfileController not assigned — reward cannot be delivered.");
+#endif
+                return;
+            }
+
+            if (mission._rewardType == "Gold")
+            {
+                profileController.AddGold(mission._rewardAmount);
+            }
+            else if (mission._rewardType == "NewCard")
+            {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                Debug.Log($"[MissionManager] NewCard reward granted for mission: {mission._missionName}");
+#endif
+            }
         }
 
-        public void UpdateMissionProgress(MissionType type, int amount)
+        public void UpdateMissionProgress(DefaultNamespace.MissionType type, int amount)
         {
             foreach (var mission in _activeMissions)
             {

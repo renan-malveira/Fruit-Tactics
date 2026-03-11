@@ -35,8 +35,6 @@ namespace Managers
             try
             {
                 await UnityServices.InitializeAsync();
-                Debug.Log("[Analytics] Unity Services initialized successfully");
-
                 GiveConsent();
                 _isInitialized = true;
             }
@@ -49,13 +47,11 @@ namespace Managers
         private void GiveConsent()
         {
             AnalyticsService.Instance.StartDataCollection();
-            Debug.Log("[Analytics] Data collection started");
         }
 
         public void TrackLevelStarted(int levelNumber, string levelName = "")
         {
-            if (!_isInitialized)
-                return;
+            if (!_isInitialized) return;
 
             var customEvent = new CustomEvent("level_started")
             {
@@ -64,13 +60,11 @@ namespace Managers
             };
 
             AnalyticsService.Instance.RecordEvent(customEvent);
-            Debug.Log($"[Analytics] Level Started: {levelNumber}");
         }
 
-        public void TrackLevelCompleted(int levelNumber, int score,int stars, float timeSpent, bool victory)
+        public void TrackLevelCompleted(int levelNumber, int score, int stars, float timeSpent, bool victory)
         {
-            if (!_isInitialized)
-                return;
+            if (!_isInitialized) return;
 
             var customEvent = new CustomEvent("level_completed")
             {
@@ -82,88 +76,75 @@ namespace Managers
             };
             
             AnalyticsService.Instance.RecordEvent(customEvent);
-            Debug.Log($"[Analytics] Level Completed: {levelNumber}, Score: {score}, Stars: {stars}");
         }
 
         public void TrackLevelFailed(int levelNumber, int score, float timeSpent, string failReason)
         {
-            if (!_isInitialized)
-                return;
+            if (!_isInitialized) return;
 
             var customEvent = new CustomEvent("level_failed")
             {
-                {"level_number",  levelNumber },
-                {"score", score },
-                {"time_spent", timeSpent },
-                {"fail_reason", failReason }
+                { "level_number", levelNumber },
+                { "score", score },
+                { "time_spent", timeSpent },
+                { "fail_reason", failReason }
             };
             
             AnalyticsService.Instance.RecordEvent(customEvent);
-            Debug.Log($"[Analytics] Level Failed: {levelNumber}, Reason: {failReason}");
         }
 
         public void TrackDailyMissionCompleted(string missionId, string missionType, int rewardAmount)
         {
-            if (!_isInitialized)
-                return;
+            if (!_isInitialized) return;
 
             var customEvent = new CustomEvent("daily_mission_completed")
             {
-                {"mission_id", missionId },
-                {"mission_type", missionType },
-                {"reward_amount", rewardAmount }
+                { "mission_id", missionId },
+                { "mission_type", missionType },
+                { "reward_amount", rewardAmount }
             };
             
             AnalyticsService.Instance.RecordEvent(customEvent);
-            Debug.Log($"[Analytics] Daily Mission Completed: {missionId}");
         }
 
         public void TrackDailyLoginClaimed(int dayNumber, int rewardAmount)
         {
-            if (!_isInitialized)
-                return;
+            if (!_isInitialized) return;
 
             var customEvent = new CustomEvent("daily_login_claimed")
             {
-                {"day_number", dayNumber },
-                {"reward_amount", rewardAmount }
+                { "day_number", dayNumber },
+                { "reward_amount", rewardAmount }
             };
             
             AnalyticsService.Instance.RecordEvent(customEvent);
-            Debug.Log($"[Analytics] Daily Login Claimed: Day {dayNumber}, Reward: {rewardAmount}");
         }
 
         public void TrackStoreOpened()
         {
-            if (!_isInitialized)
-                return;
+            if (!_isInitialized) return;
             
-            var customEvent = new CustomEvent("store_opened");
-            AnalyticsService.Instance.RecordEvent(customEvent);
-            Debug.Log("[Analytics] Store Opened");
+            AnalyticsService.Instance.RecordEvent(new CustomEvent("store_opened"));
         }
 
         public void TrackItemPurchased(string itemId, string itemType, int price, string currency = "gold")
         {
-            if (!_isInitialized)
-                return;
+            if (!_isInitialized) return;
 
             var customEvent = new CustomEvent("item_purchased")
             {
-                {"item_id", itemId },
-                {"item_type", itemType },
-                {"price", price },
-                {"currency", currency }
+                { "item_id", itemId },
+                { "item_type", itemType },
+                { "price", price },
+                { "currency", currency }
             };
             
             AnalyticsService.Instance.RecordEvent(customEvent);
-            Debug.Log($"[Analytics] Item Purchased: {itemId}, Price: {price}, Currency: {currency}");
         }
 
         public void TrackCurrencyEarned(int amount, string source, string currency = "gold")
         {
-            if (!_isInitialized)
-                return;
+            if (!_isInitialized) return;
 
             var customEvent = new CustomEvent("currency_earned")
             {
@@ -173,13 +154,11 @@ namespace Managers
             };
             
             AnalyticsService.Instance.RecordEvent(customEvent);
-            Debug.Log($"[Analytics] Currency Earned: {amount},  Currency: {currency} from {source}");
         }
 
         public void TrackCurrencySpent(int amount, string reason, string currency = "gold")
         {
-            if (!_isInitialized)
-                return;
+            if (!_isInitialized) return;
 
             var customEvent = new CustomEvent("currency_spent")
             {
@@ -189,13 +168,11 @@ namespace Managers
             };
             
             AnalyticsService.Instance.RecordEvent(customEvent);
-            Debug.Log($"[Analytics] Currency Spent: {amount}, {currency} on {reason}");
         }
 
         public void TrackPowerUpUsed(string powerUpType, int levelNumber)
         {
-            if (!_isInitialized)
-                return;
+            if (!_isInitialized) return;
 
             var customEvent = new CustomEvent("powerup_used")
             {
@@ -204,13 +181,11 @@ namespace Managers
             };
             
             AnalyticsService.Instance.RecordEvent(customEvent);
-            Debug.Log($"[Analytics] Power Up Used: {powerUpType} on Level {levelNumber}");
         }
 
         public void TrackAdWatched(string adType, string placement, bool completed)
         {
-            if(!_isInitialized)
-                return;
+            if (!_isInitialized) return;
 
             var customEvent = new CustomEvent("ad_watched")
             {
@@ -220,13 +195,11 @@ namespace Managers
             };
             
             AnalyticsService.Instance.RecordEvent(customEvent);
-            Debug.Log($"[Analytics] Ad Watched: {adType} at {placement}, Completed: {completed}");
         }
 
         public void TrackSettingsChanged(string settingName, object settingValue)
         {
-            if (!_isInitialized)
-                return;
+            if (!_isInitialized) return;
 
             var customEvent = new CustomEvent("settings_changed")
             {
@@ -235,13 +208,11 @@ namespace Managers
             };
             
             AnalyticsService.Instance.RecordEvent(customEvent);
-            Debug.Log($"[Analytics] Settings Changed: {settingName} = {settingValue}");
         }
 
         public void TrackLanguageChanged(string oldLanguage, string newLanguage)
         {
-            if (!_isInitialized)
-                return;
+            if (!_isInitialized) return;
 
             var customEvent = new CustomEvent("language_changed")
             {
@@ -250,13 +221,11 @@ namespace Managers
             };
 
             AnalyticsService.Instance.RecordEvent(customEvent);
-            Debug.Log($"[Analytics] Language Changed: {oldLanguage} -> {newLanguage}");
         }
 
         public void TrackMenuOpened(string menuName)
         {
-            if (!_isInitialized)
-                return;
+            if (!_isInitialized) return;
 
             var customEvent = new CustomEvent("menu_opened")
             {
@@ -264,13 +233,11 @@ namespace Managers
             };
             
             AnalyticsService.Instance.RecordEvent(customEvent);
-            Debug.Log($"[Analytics] Menu Opened: {menuName}");
         }
 
         public void TrackTutorialStep(int stepNumber, string stepName, bool completed)
         {
-            if (!_isInitialized)
-                return;
+            if (!_isInitialized) return;
 
             var customEvent = new CustomEvent("tutorial_step")
             {
@@ -280,13 +247,11 @@ namespace Managers
             };
             
             AnalyticsService.Instance.RecordEvent(customEvent);
-            Debug.Log($"[Analytics] Tutorial step: {stepNumber} - {stepName}, Completed: {completed}");
         }
 
         public void TrackCombo(int comboCount, int scoreEarned)
         {
-            if (!_isInitialized)
-                return;
+            if (!_isInitialized) return;
 
             var customEvent = new CustomEvent("combo_performed")
             {
@@ -295,13 +260,11 @@ namespace Managers
             };
 
             AnalyticsService.Instance.RecordEvent(customEvent);
-            Debug.Log($"[Analytics] Combo: {comboCount}x, Score: {scoreEarned}");
         }
 
         public void TrackSceneTransition(string fromScene, string toScene)
         {
-            if (!_isInitialized)
-                return;
+            if (!_isInitialized) return;
 
             var customEvent = new CustomEvent("scene_transition")
             {
@@ -310,13 +273,11 @@ namespace Managers
             };
 
             AnalyticsService.Instance.RecordEvent(customEvent);
-            Debug.Log($"[Analytics] Scene Transition: {fromScene} → {toScene}");
         }
 
         public void TrackButtonClicked(string buttonName)
         {
-            if (!_isInitialized)
-                return;
+            if (!_isInitialized) return;
 
             var customEvent = new CustomEvent("button_clicked")
             {
@@ -324,13 +285,11 @@ namespace Managers
             };
 
             AnalyticsService.Instance.RecordEvent(customEvent);
-            Debug.Log($"[Analytics] Button Clicked: {buttonName}");
         }
 
         public void TrackAdStarted(string adType, string placement)
         {
-            if (!_isInitialized)
-                return;
+            if (!_isInitialized) return;
 
             var customEvent = new CustomEvent("ad_started")
             {
@@ -339,13 +298,11 @@ namespace Managers
             };
 
             AnalyticsService.Instance.RecordEvent(customEvent);
-            Debug.Log($"[Analytics] Ad Started: {adType} at {placement}");
         }
 
         public void TrackAdCompleted(string adType, bool completed)
         {
-            if (!_isInitialized)
-                return;
+            if (!_isInitialized) return;
 
             var customEvent = new CustomEvent("ad_completed")
             {
@@ -354,7 +311,6 @@ namespace Managers
             };
 
             AnalyticsService.Instance.RecordEvent(customEvent);
-            Debug.Log($"[Analytics] Ad Completed: {adType}, Success: {completed}");
         }
 
         private void OnApplicationQuit()

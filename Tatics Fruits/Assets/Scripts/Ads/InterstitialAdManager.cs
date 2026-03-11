@@ -9,7 +9,12 @@ namespace Ads
         private const int TestModeMatches = 1;
 
         [SerializeField] private bool enableAds = true;
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         [SerializeField] private bool testMode = false;
+#else
+        private const bool testMode = false;
+#endif
         
         private IInterstitialAdProvider _adProvider;
         private bool _isShowingAd;
@@ -37,63 +42,34 @@ namespace Ads
 
         public void OnMatchCompleted()
         {
-            if(!enableAds)
-            {
-                Debug.Log("[InterstitialAdManager] Ads are disabled.");
+            if (!enableAds || _isShowingAd)
                 return;
-            }
-    
-            if(_isShowingAd)
-            {
-                Debug.Log("[InterstitialAdManager] Already showing an ad.");
-                return;
-            }
 
             _matchesSinceLastAd++;
-    
+
             int currentInterval = testMode ? TestModeMatches : MatchesBetweenAds;
-    
-            Debug.Log($"[InterstitialAdManager] Match completed! Count: {_matchesSinceLastAd}/{currentInterval}. Provider: {(_adProvider != null ? "SET" : "NULL")}");
 
             if (_matchesSinceLastAd >= currentInterval)
-            {
                 ShowInterstitialAd();
-            }
-            else
-            {
-                Debug.Log($"[InterstitialAdManager] {currentInterval - _matchesSinceLastAd} more matches until next ad.");
-            }
         }
 
         public void SetAdProvider(IInterstitialAdProvider provider)
         {
             _adProvider = provider;
-            Debug.Log($"[InterstitialAdManager] ✅ Ad provider SET: {provider.GetType().Name}");
             LoadNextAd();
         }
 
         public void ShowInterstitialAd()
         {
             if (!enableAds || _isShowingAd)
-            {
-                Debug.Log("[InterstitialAdManager] Ads disabled or already showing an ad.");
                 return;
-            }
 
-            if (_adProvider == null)
+            if (_adProvider == null || !_adProvider.IsAdReady())
             {
-                Debug.LogWarning("[InterstitialAdManager] No ad provider set. Please implement and set an IInterstitialAdProvider.");
-                return;
-            }
-
-            if (!_adProvider.IsAdReady())
-            {
-                Debug.Log("[InterstitialAdManager] Interstitial ad is not ready yet. Loading next ad...");
                 LoadNextAd();
                 return;
             }
 
-            Debug.Log("[InterstitialAdManager] Showing interstitial ad...");
             _isShowingAd = true;
             Time.timeScale = 0f;
             
@@ -107,7 +83,6 @@ namespace Ads
 
         private void OnAdCompleted()
         {
-            Debug.Log("[InterstitialAdManager] Interstitial ad completed successfully.");
             Managers.AnalyticsManager.Instance?.TrackAdCompleted("interstitial", true);
             ResetAdTimer();
             ResumeGame();
@@ -116,7 +91,6 @@ namespace Ads
 
         private void OnAdFailed()
         {
-            Debug.LogWarning("[InterstitialAdManager] Interstitial ad failed to show.");
             Managers.AnalyticsManager.Instance?.TrackAdCompleted("interstitial", false);
             ResetAdTimer();
             ResumeGame();
@@ -154,7 +128,6 @@ namespace Ads
         {
             testMode = !testMode;
             ResetAdTimer();
-            Debug.Log($"[InterstitialAdManager] Test mode {(testMode ? "ENABLED" : "DISABLED")}. Interval: {(testMode ? TestModeMatches : MatchesBetweenAds)} matches");
         }
 
         public bool IsTestModeEnabled()

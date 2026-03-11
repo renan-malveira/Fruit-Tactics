@@ -41,19 +41,12 @@ namespace Managers
                 if (dependencyStatus == DependencyStatus.Available)
                 {
                     _firebaseAuth = FirebaseAuth.DefaultInstance;
-                    Debug.Log("[LoginManager] Firebase initialized successfully");
-                
                     _currentUser = _firebaseAuth.CurrentUser;
+
                     if (_currentUser != null)
-                    {
-                        Debug.Log($"[LoginManager] Existing user found: {_currentUser.UserId}");
                         OnFirebaseSignedIn(_currentUser);
-                    }
                     else
-                    {
-                        Debug.Log("[LoginManager] No existing user found. Creating new guest user...");
                         SignInAsGuest();
-                    }
                 }
                 else
                 {
@@ -73,11 +66,8 @@ namespace Managers
             {
                 if (status == SignInStatus.Success)
                 {
-                    Debug.Log("[LoginManager] Google Play Games authentication successful");
-            
                     PlayGamesPlatform.Instance.RequestServerSideAccess(false, idToken =>
                     {
-                        Debug.Log($"[LoginManager] ID Token received: {idToken?.Substring(0, 20)}...");
                         SignInWithGooglePlayGamesFirebase(idToken);
                     });
                 }
@@ -90,7 +80,6 @@ namespace Managers
 #else
         public void LoginGooglePlayGames()
         {
-            Debug.LogWarning("[LoginManager] Google Play Games login is only available on Android");
             SignInAsGuest();
         }
 #endif
@@ -105,59 +94,36 @@ namespace Managers
                 return;
             }
 
-            Debug.Log("[LoginManager] Signing in to Firebase with Google Play Games...");
-    
             Credential credential = PlayGamesAuthProvider.GetCredential(idToken);
     
             _firebaseAuth.SignInWithCredentialAsync(credential).ContinueWithOnMainThread(task =>
             {
-                if (task.IsCanceled)
-                {
-                    Debug.LogError("[LoginManager] Firebase sign-in was canceled");
-                    return;
-                }
-        
-                if (task.IsFaulted)
+                if (task.IsCanceled || task.IsFaulted)
                 {
                     Debug.LogError($"[LoginManager] Firebase sign-in failed: {task.Exception}");
                     return;
                 }
 
                 _currentUser = task.Result;
-                Debug.Log($"[LoginManager] Firebase sign-in successful! User ID: {_currentUser.UserId}");
-        
                 OnFirebaseSignedIn(_currentUser);
             });
         }
 #else
-        private void SignInWithGooglePlayGamesFirebase(string idToken)
-        {
-            Debug.LogWarning("[LoginManager] Google Play Games authentication is only available on Android");
-        }
+        private void SignInWithGooglePlayGamesFirebase(string idToken) { }
 #endif
 
 
         public void SignInAsGuest()
         {
-            Debug.Log("[LoginManager] Signing in as guest...");
-        
             _firebaseAuth.SignInAnonymouslyAsync().ContinueWithOnMainThread(task =>
             {
-                if (task.IsCanceled)
-                {
-                    Debug.LogError("[LoginManager] Guest sign-in was canceled");
-                    return;
-                }
-            
-                if (task.IsFaulted)
+                if (task.IsCanceled || task.IsFaulted)
                 {
                     Debug.LogError($"[LoginManager] Guest sign-in failed: {task.Exception}");
                     return;
                 }
 
                 _currentUser = task.Result.User;
-                Debug.Log($"[LoginManager] Guest sign-in successful! User ID: {_currentUser.UserId}");
-            
                 OnFirebaseSignedIn(_currentUser);
             });
         }
@@ -173,8 +139,6 @@ namespace Managers
             var uid = user.UserId;
             var displayName = user.DisplayName ?? "Guest";
 
-            Debug.Log($"[LoginManager] User signed in - ID: {uid}, Name: {displayName}");
-
             if (dataSaver == null)
             {
                 Debug.LogError("[LoginManager] DataSaver is null!");
@@ -189,27 +153,17 @@ namespace Managers
 
             dataSaver.OnDataLoaded += HandleDataLoaded;
             dataSaver.OnLoadFailed += HandleLoadFailed;
-            dataSaver.OnDataNotFound += () =>
-            {
-                dataSaver.SaveData(force: true);
-            };
+            dataSaver.OnDataNotFound += HandleDataNotFound;
 
             dataSaver.LoadData();
 
             void HandleDataLoaded(DataToSave cloud)
             {
-                Debug.Log($"[LoginManager] ✅ Data loaded from Firebase/Local:");
-                Debug.Log($"  └─ Coins: {cloud.totalCoins}");
-                Debug.Log($"  └─ Level: {cloud.crrLevel}");
-                Debug.Log($"  └─ Unlocked Avatars: {cloud.unlockedAvatar?.Count ?? 0}");
-                Debug.Log($"  └─ Purchased Avatars: {cloud.purchasedAvatar?.Count ?? 0}");
                 ApplyCloudDataToProfile(cloud);
             }
 
             void HandleDataNotFound()
             {
-                Debug.Log("[LoginManager] No data found in cloud/local. Using default created by DataSaver.");
-                
                 dataSaver.OnDataLoaded -= HandleDataLoaded;
                 dataSaver.OnLoadFailed -= HandleLoadFailed;
                 dataSaver.OnDataNotFound -= HandleDataNotFound;
@@ -218,7 +172,6 @@ namespace Managers
             void HandleLoadFailed(Exception e)
             {
                 Debug.LogError($"[LoginManager] Load failed: {e}");
-
                 dataSaver.OnDataLoaded -= HandleDataLoaded;
                 dataSaver.OnLoadFailed -= HandleLoadFailed;
                 dataSaver.OnDataNotFound -= HandleDataNotFound;
@@ -228,10 +181,7 @@ namespace Managers
             {
                 var profileController = FindFirstObjectByType<PlayerProfileController>();
                 if (profileController == null || profileController.Data == null)
-                {
-                    Debug.LogWarning("[LoginManager] PlayerProfileController not found or Data is null.");
                     return;
-                }
                 
                 profileController.Data.playerName = string.IsNullOrEmpty(displayName) || displayName == "Guest"
                     ? cloud.userName
@@ -253,7 +203,7 @@ namespace Managers
                 profileController.Data.language = cloud.language;
                 profileController.Data.firebaseUserId = uid;
 
-                if (dataSaver != null && dataSaver.dataToSave != null)
+                if (dataSaver?.dataToSave != null)
                 {
                     dataSaver.dataToSave.totalCoins = cloud.totalCoins;
                     dataSaver.SaveLocal();
@@ -269,16 +219,9 @@ namespace Managers
                 profileController.SaveProfile();
                 profileController.SetFirebaseUserId(uid);
                 
-                Debug.Log($"[LoginManager] ✅ Applied cloud data to PlayerProfileController:");
-                Debug.Log($"  └─ Gold: {profileController.Data.gold}");
-                Debug.Log($"  └─ Unlocked Avatars: {profileController.Data.unlockedAvatars.Count}");
-                Debug.Log($"  └─ Purchased Avatars: {profileController.Data.purchasedAvatars.Count}");
-                
                 dataSaver.OnDataLoaded -= HandleDataLoaded;
                 dataSaver.OnLoadFailed -= HandleLoadFailed;
                 dataSaver.OnDataNotFound -= HandleDataNotFound;
-
-                Debug.Log($"[LoginManager] ✅ Profile applied. Gold(now): {profileController.Data.gold}");
             }
         }
 

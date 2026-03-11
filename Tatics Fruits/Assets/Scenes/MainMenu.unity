@@ -11654,6 +11654,7 @@ MonoBehaviour:
   goldHudRoot: {fileID: 1059827660}
   goldHutVisibleByDefault: 1
   deckLimit: 5
+  dataSaver: {fileID: 1250548557}
 --- !u!1 &1286518638
 GameObject:
   m_ObjectHideFlags: 0
@@ -19642,8 +19643,8 @@ MonoBehaviour:
   m_fontSizeBase: 24
   m_fontWeight: 400
   m_enableAutoSizing: 1
-  m_fontSizeMin: 43.200005
-  m_fontSizeMax: 172.80002
+  m_fontSizeMin: 20.9925
+  m_fontSizeMax: 83.97
   m_fontStyle: 1
   m_HorizontalAlignment: 2
   m_VerticalAlignment: 512
