@@ -24,7 +24,7 @@ namespace Managers
         public List<string> equippedDeck = new List<string>();
         public List<int> unlockedAvatar = new List<int> { 0 };
         public List<int> purchasedAvatar = new List<int>();
-        public Dictionary<string, int> bestScores = new Dictionary<string, int>();
+        public Dictionary<string, int> BestScores = new Dictionary<string, int>();
 
         public bool musicOn = true;
         public bool sfxOn = true;
@@ -46,8 +46,7 @@ namespace Managers
 
         private DatabaseReference _databaseReference;
         private string _localFilePath;
-
-        // Dirty flag para autosave inteligente
+        
         public bool IsDirty { get; private set; }
 
         public event Action<DataToSave> OnDataLoaded;
@@ -148,8 +147,7 @@ namespace Managers
 
             IsDirty = false;
         }
-
-        // Helpers prontos (você pode usar no seu game)
+        
         public void SetCoins(int coins)
         {
             dataToSave.totalCoins = Mathf.Max(0, coins);
@@ -165,8 +163,10 @@ namespace Managers
         public void SetRemoveAds(bool value)
         {
             dataToSave.removeAds = value;
-            MarkDirty();
+            Ads.AdGatingService.Instance?.NotifyStatusChanged();
+            SaveData();
         }
+
 
         public void SetVip(bool isVip, int durationDays = 30)
         {
@@ -329,7 +329,7 @@ namespace Managers
                 equippedDeck = new List<string>(),
                 unlockedAvatar = new List<int> { 0 },
                 purchasedAvatar = new List<int>(),
-                bestScores = new Dictionary<string, int>(),
+                BestScores = new Dictionary<string, int>(),
                 musicOn = true,
                 sfxOn = true,
                 vfxOn = true,

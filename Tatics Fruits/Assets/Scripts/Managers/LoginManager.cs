@@ -195,7 +195,7 @@ namespace Managers
                 if (cloud.equippedDeck != null) profileController.Data.equippedDeck = new List<string>(cloud.equippedDeck);
                 if (cloud.unlockedAvatar != null) profileController.Data.unlockedAvatars = new List<int>(cloud.unlockedAvatar);
                 if (cloud.purchasedAvatar != null) profileController.Data.purchasedAvatars = new List<int>(cloud.purchasedAvatar);
-                if (cloud.bestScores != null) profileController.Data.BestScores = new Dictionary<string, int>(cloud.bestScores);
+                if (cloud.BestScores != null) profileController.Data.BestScores = new Dictionary<string, int>(cloud.BestScores);
 
                 profileController.Data.musicOn = cloud.musicOn;
                 profileController.Data.sfxOn = cloud.sfxOn;

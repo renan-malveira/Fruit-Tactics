@@ -1058,6 +1058,51 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 131159042}
   m_CullTransparentMesh: 1
+--- !u!1 &134158379
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 134158380}
+  - component: {fileID: 134158381}
+  m_Layer: 0
+  m_Name: AdGatingService
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &134158380
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 134158379}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &134158381
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 134158379}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 40b26910b5e24d9d98012379befdfbcb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Ads.AdGatingService
+  dataSaver: {fileID: 1250548557}
 --- !u!1 &136674913
 GameObject:
   m_ObjectHideFlags: 0
@@ -15277,8 +15322,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b90b68707e97f5144b4aae771b5559a2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Ads.InterstitialAdManager
-  enableAds: 1
   testMode: 0
+  adGatingService: {fileID: 134158381}
 --- !u!1 &1695646025
 GameObject:
   m_ObjectHideFlags: 0
@@ -19643,8 +19688,8 @@ MonoBehaviour:
   m_fontSizeBase: 24
   m_fontWeight: 400
   m_enableAutoSizing: 1
-  m_fontSizeMin: 20.9925
-  m_fontSizeMax: 83.97
+  m_fontSizeMin: 43.200005
+  m_fontSizeMax: 172.80002
   m_fontStyle: 1
   m_HorizontalAlignment: 2
   m_VerticalAlignment: 512
@@ -21257,3 +21302,4 @@ SceneRoots:
   - {fileID: 765468453}
   - {fileID: 351946062}
   - {fileID: 1270414123}
+  - {fileID: 134158380}

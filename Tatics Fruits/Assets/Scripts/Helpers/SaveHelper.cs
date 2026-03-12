@@ -85,28 +85,23 @@ public static class SaveHelper
             profileController.SetVfxEnabled(vfx);
             profileController.SetLanguage(language);
         }
-        else
-        {
-            Debug.LogWarning("[SaveHelper] PlayerProfileController not found!");
-        }
     }
 
     public static void OnRemoveAdsPurchased()
     {
-        var profileController = Object.FindFirstObjectByType<PlayerProfileController>();
-        if (profileController != null)
-        {
-            profileController.SetRemoveAds(true);
-        }
-        
         if (PlayerDataManager.Instance != null)
         {
             PlayerDataManager.Instance.SetRemoveAds(true);
             PlayerDataManager.Instance.SavePlayerData();
         }
-        
-        Debug.Log("[SaveHelper] ✅ Remove Ads purchased and saved!");
+
+        var profileController = Object.FindFirstObjectByType<PlayerProfileController>();
+        if (profileController != null)
+            profileController.SetRemoveAds(true);
+
+        Ads.AdGatingService.Instance?.NotifyStatusChanged();
     }
+
 
     public static void AddCoins(int amount)
     {

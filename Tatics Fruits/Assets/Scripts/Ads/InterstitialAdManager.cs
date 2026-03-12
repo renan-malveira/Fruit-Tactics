@@ -8,14 +8,14 @@ namespace Ads
         private const int MatchesBetweenAds = 3;
         private const int TestModeMatches = 1;
 
-        [SerializeField] private bool enableAds = true;
-
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         [SerializeField] private bool testMode = false;
 #else
         private const bool testMode = false;
 #endif
-        
+
+        [SerializeField] private AdGatingService adGatingService;
+
         private IInterstitialAdProvider _adProvider;
         private bool _isShowingAd;
         private int _matchesSinceLastAd;
@@ -37,12 +37,39 @@ namespace Ads
         private void Start()
         {
             _matchesSinceLastAd = 0;
+
+            if (adGatingService != null)
+                adGatingService.OnAdStatusChanged += OnAdStatusChanged;
+
             LoadNextAd();
+        }
+
+        private void OnDestroy()
+        {
+            if (adGatingService != null)
+                adGatingService.OnAdStatusChanged -= OnAdStatusChanged;
+        }
+
+        private void OnAdStatusChanged()
+        {
+            if (!ShouldShowAds())
+                ResetAdTimer();
+        }
+
+        public void SetAdGatingService(IAdGatingService service)
+        {
+            if (adGatingService != null)
+                adGatingService.OnAdStatusChanged -= OnAdStatusChanged;
+
+            adGatingService = service as AdGatingService;
+
+            if (adGatingService != null)
+                adGatingService.OnAdStatusChanged += OnAdStatusChanged;
         }
 
         public void OnMatchCompleted()
         {
-            if (!enableAds || _isShowingAd)
+            if (!ShouldShowAds() || _isShowingAd)
                 return;
 
             _matchesSinceLastAd++;
@@ -61,7 +88,7 @@ namespace Ads
 
         public void ShowInterstitialAd()
         {
-            if (!enableAds || _isShowingAd)
+            if (!ShouldShowAds() || _isShowingAd)
                 return;
 
             if (_adProvider == null || !_adProvider.IsAdReady())
@@ -72,7 +99,7 @@ namespace Ads
 
             _isShowingAd = true;
             Time.timeScale = 0f;
-            
+
             Managers.AnalyticsManager.Instance?.TrackAdStarted("interstitial", "auto");
 
             _adProvider.ShowAd(
@@ -97,6 +124,11 @@ namespace Ads
             LoadNextAd();
         }
 
+        private bool ShouldShowAds()
+        {
+            return adGatingService == null || adGatingService.ShouldShowAds();
+        }
+
         private void ResetAdTimer()
         {
             _matchesSinceLastAd = 0;
@@ -111,11 +143,6 @@ namespace Ads
         private void LoadNextAd()
         {
             _adProvider?.LoadAd();
-        }
-
-        public void EnableAds(bool enable)
-        {
-            enableAds = enable;
         }
 
         public int GetMatchesUntilNextAd()
