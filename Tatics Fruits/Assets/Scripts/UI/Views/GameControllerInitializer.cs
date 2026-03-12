@@ -204,12 +204,17 @@ namespace UI.Views
             var completed = Progress.CanAdvance(levelConfig, totalScore, 0.75f);
             _profileService.SetLevel(currentLevel, completed);
             
+            var levelId = GetLevelId();
+
+            var firebaseUid  = Firebase.Auth.FirebaseAuth.DefaultInstance?.CurrentUser?.UserId ?? string.Empty;
+            var playerName   = _profileService.Data?.playerName ?? string.Empty;
+            var previousBest = _profileService.GetBestScore(levelId);
+            var lbRepository = new Services.FirebaseLeaderboardRepository();
+            var lbPresenter  = new Services.LeaderboardPresenter(lbRepository);
+            lbPresenter.SubmitIfNewBest(firebaseUid, playerName, totalScore, previousBest);
+
             var rewardGold = model.starsEarned * 10;
             _profileService.AddGold(rewardGold);
-
-            var levelId = levelConfig.levelId;
-            if (string.IsNullOrEmpty(levelId))
-                levelId = levelConfig.name;
             
             Progress.MarkNextUnlockedIfEligible(levelConfig, _score.Total, 0.75f);
 

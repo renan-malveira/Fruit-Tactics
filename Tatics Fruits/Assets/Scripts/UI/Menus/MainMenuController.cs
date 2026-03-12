@@ -12,15 +12,15 @@ namespace UI.Menus
     {
         [Header("Buttons")]
         [SerializeField] private Button playButton;
-        //[SerializeField] private Button rankingButton;
+        [SerializeField] private Button rankingButton;
         [SerializeField] private Button storeButton;
         [SerializeField] private Button dailyMissionsButton;
         [SerializeField] private Button settingsButton;
         [SerializeField] private Button profileButton;
         
         [Header("LGPD")]
-        [SerializeField] private LgpdView lgpdViewPrefab;   // o prefab
-        [SerializeField] private Transform uiRoot;          // pai na UI (Canvas ou um panel root)
+        [SerializeField] private LgpdView lgpdViewPrefab;
+        [SerializeField] private Transform uiRoot;
 
 
         [Header("Title")]
@@ -105,11 +105,11 @@ namespace UI.Menus
                 .Append(titleTransform.DOScale(1f, 0.8f).SetEase(Ease.OutBounce));
         
             playButton.onClick.AddListener(OnClickPlay);
-            // rankingButton.onClick.AddListener(() =>
-            // {
-            //     if (!rankingPanel) return;
-            //     rankingPanel.SetActive(true);
-            // });
+            rankingButton.onClick.AddListener(() =>
+            {
+            if (!rankingPanel) return;
+                rankingPanel.SetActive(true);
+            });
 
             storeButton.onClick.AddListener(OpenStorePanel);
             profileButton.onClick.AddListener(OpenProfilePanel);

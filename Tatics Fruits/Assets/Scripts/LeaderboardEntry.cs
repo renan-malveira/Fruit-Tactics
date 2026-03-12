@@ -1,4 +1,3 @@
-
 [System.Serializable]
 public class LeaderboardEntry
 {
@@ -7,6 +6,7 @@ public class LeaderboardEntry
     public string playerName;
     public int score;
     public float timeSeconds;
+    public long updatedAt;
 }
 
 [System.Serializable]
