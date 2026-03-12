@@ -73,6 +73,8 @@ namespace Core.Services
     {
         bool TryMakePair(CardInstance A, CardInstance B, out PairResult result);
         bool IsValidPair(CardInstance A, CardInstance B);
+        event System.Action<PairResult> OnPairResolved;
+        event System.Action OnInvalidPairAttempt;
     }
 
     public interface ISwapService

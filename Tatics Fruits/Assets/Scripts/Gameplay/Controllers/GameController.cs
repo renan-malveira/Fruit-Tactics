@@ -26,25 +26,28 @@ namespace Gameplay.Controllers
 
         private CardInstance? _selectedCard = null;
 
-        [SerializeField] private PairMatchFeedback _pairMatchFeedback;
-
         public event Action<EndCause> OnLevelEnded;
         public event Action<int, ComboTierConfigSo.ComboTier> OnComboTierChanged;
         public event Action<int> OnComboChanged;
         public event Action OnComboReset;
+        public event Action<PairResult> OnPairResolved;
+        public event Action OnEnterPreRound;
+        public event Action OnExitPreRound;
 
-        public GameController(IGameStateMachine fsm, ITimeManager time, IDeckService deck, 
-            IHandService hand, IRuleEngine rule, ISwapService swap, IComboTracker combo, 
+        public bool IsPlaying => _fsm.Current == DefaultNamespace.New_GameplayCore.GameState.Playing;
+
+        public GameController(IGameStateMachine fsm, ITimeManager time, IDeckService deck,
+            IHandService hand, IRuleEngine rule, ISwapService swap, IComboTracker combo,
             LevelConfigSO cfg, ScoreService score)
         {
-            _fsm = fsm; 
-            _time = time; 
-            _deck = deck; 
-            _hand = hand; 
-            _rule = rule; 
+            _fsm = fsm;
+            _time = time;
+            _deck = deck;
+            _hand = hand;
+            _rule = rule;
             _swap = swap;
             _combo = combo ?? throw new ArgumentNullException(nameof(combo));
-            _cfg = cfg; 
+            _cfg = cfg;
             _score = score ?? throw new ArgumentNullException(nameof(score));
 
             _time.OnTimeChanged += t =>
@@ -55,7 +58,7 @@ namespace Gameplay.Controllers
                     OnLevelEnded?.Invoke(EndCause.TimeUp);
                 }
             };
-            
+
             _score.OnScoreChanged += (total, delta) =>
             {
                 if (_fsm.Current == DefaultNamespace.New_GameplayCore.GameState.Playing && total >= _cfg.targetScore)
@@ -67,42 +70,28 @@ namespace Gameplay.Controllers
 
             _combo.OnComboChanged += HandleComboChanged;
             _combo.OnComboTierChanged += HandleComboTierChanged;
+            _rule.OnPairResolved += result => OnPairResolved?.Invoke(result);
         }
-
-        public bool IsPlaying { get; }
-        public event Action OnEnterPreRound;
-        public event Action OnExitPreRound;
 
         private void HandleComboChanged(int comboCount)
         {
             OnComboChanged?.Invoke(comboCount);
-            
             if (comboCount == 0)
-            {
                 OnComboReset?.Invoke();
-            }
         }
 
         private void HandleComboTierChanged(int comboCount, ComboTierConfigSo.ComboTier tier)
         {
             OnComboTierChanged?.Invoke(comboCount, tier);
-            
-            if (tier != null)
-            {
-                Debug.Log($"[GameController] Combo Tier Reached: {tier.tierName} (x{comboCount})");
-            }
         }
 
         public void StartLevel(LevelConfigSO cfg, DeckConfigSo deckCfg)
         {
             _cfg = cfg;
-            
             var rng = cfg.useFixedSeed ? new Random(cfg.fixedSeed) : new Random();
             _deck.Build(deckCfg, rng);
-            
             _fsm.SetState(DefaultNamespace.New_GameplayCore.GameState.PreRound);
             OnEnterPreRound?.Invoke();
-            
             var cards = new List<CardInstance>();
             _deck.DrawMany(cfg.handSize, cards);
             _hand.AddMany(cards);
@@ -110,46 +99,57 @@ namespace Gameplay.Controllers
 
         public void UpdateTick(float deltaTime)
         {
-            if (_fsm.Current != DefaultNamespace.New_GameplayCore.GameState.Playing) 
+            if (_fsm.Current != DefaultNamespace.New_GameplayCore.GameState.Playing)
                 return;
-            
             (_time as TimeManager)?.Tick(deltaTime);
-            
             float deltaMs = deltaTime * 1000f;
             _combo.Tick(deltaMs);
         }
 
         public void OnCardSelected(CardInstance card)
         {
+            if (_fsm.Current != DefaultNamespace.New_GameplayCore.GameState.Playing)
+                return;
+
             if (_selectedCard == null)
             {
                 _selectedCard = card;
                 return;
             }
 
-            if (_rule.TryMakePair(_selectedCard.Value, card, out var result))
+            if (_rule.TryMakePair(_selectedCard.Value, card, out _))
             {
+                TryDrawReplacement();
+                TryDrawReplacement();
             }
 
             _selectedCard = null;
         }
 
+        private void TryDrawReplacement()
+        {
+            if (!_hand.HasSpace) return;
+
+            if (_deck.TryDraw(out var drawn))
+            {
+                _hand.TryAdd(drawn);
+                return;
+            }
+
+            if (_cfg.allowEmptyDeckRefill && _deck.TryRefillFromDiscard() && _deck.TryDraw(out drawn))
+                _hand.TryAdd(drawn);
+        }
+
         public void BeginPlayFromPreRound(PreRoundModel model)
         {
-            var rng = model.useFixedSeed ? new Random(model.effectiveSeed) : new Random();
-
             _time.TryPay(_time.TimeLeftSeconds);
             _time.Add(_cfg.initialTimeSeconds);
-
             var buf = new List<CardInstance>();
             _deck.DrawMany(_cfg.handSize, buf);
             _hand.ClearTo(new List<CardInstance>());
             _hand.AddMany(buf);
-            
             _combo.Reset();
-            
             OnExitPreRound?.Invoke();
-            
             _fsm.SetState(DefaultNamespace.New_GameplayCore.GameState.Playing);
         }
 
@@ -161,33 +161,14 @@ namespace Gameplay.Controllers
 
         public bool TryDrawOne()
         {
-            if (!(_hand as HandService).HasSpace)
-                return false;
-
-            if (!_deck.TryDraw(out var card))
-            {
-                if (_cfg.allowEmptyDeckRefill && _deck.TryRefillFromDiscard())
-                {
-                    if (!_deck.TryDraw(out card))
-                        return false;
-                }
-                else
-                {
-                    return false;
-                }
-            }
-
-            return _hand.TryAdd(card);
+            if (!(_hand as HandService).HasSpace) return false;
+            if (_deck.TryDraw(out var card)) return _hand.TryAdd(card);
+            if (_cfg.allowEmptyDeckRefill && _deck.TryRefillFromDiscard() && _deck.TryDraw(out card))
+                return _hand.TryAdd(card);
+            return false;
         }
 
-        public void OnSwapAllRequested() 
-        { 
-            _swap.TrySwapAll();
-        }
-        
-        public void OnSwapRandomRequested() 
-        { 
-            _swap.TrySwapRandom();
-        }
+        public void OnSwapAllRequested() => _swap.TrySwapAll();
+        public void OnSwapRandomRequested() => _swap.TrySwapRandom();
     }
 }

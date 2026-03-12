@@ -33,6 +33,7 @@ namespace UI.Views
         [SerializeField] private CountdownView countdownView;
         [SerializeField] private AllLevelsCompletedView allLevelsCompletedView;
         [SerializeField] private ComboTierConfigSo comboTierConfig;
+        [SerializeField] private PairMatchFeedback pairMatchFeedback;
 
         public IRuleEngine RuleEngine => _rule;
         public IGameController Controller => _controller;
@@ -68,7 +69,6 @@ namespace UI.Views
             _profileService.Load();
 
             var currentIndex = _profileService.Data.currentLevelIndex;
-            Debug.Log($"[PROFILE] Carregando level {currentIndex + 1}");
             
             if (levelSet && levelSet.levels.Length > 0)
                 levelConfig = levelSet.levels[Mathf.Clamp(currentIndex, 0, levelSet.levels.Length - 1)];
@@ -95,7 +95,11 @@ namespace UI.Views
             
             _controller.OnEnterPreRound += HandleEnterPreRound;
             _controller.OnLevelEnded += HandleLevelEnded;
-
+            _controller.OnPairResolved += HandlePairResolved;
+            
+            if (pairMatchFeedback != null)
+                _controller.OnPairResolved += result => pairMatchFeedback.PlayMatchFeedback(result.ComboCountAfter);
+            
             IsReady = true;
             OnReady?.Invoke();
         }
@@ -160,6 +164,7 @@ namespace UI.Views
             {
                 _controller.OnEnterPreRound -= HandleEnterPreRound;
                 _controller.OnLevelEnded -= HandleLevelEnded;
+                _controller.OnPairResolved -= HandlePairResolved;
             }
 
             if (tutorialManager != null)
@@ -167,6 +172,13 @@ namespace UI.Views
                 tutorialManager.OnTutorialFinished -= HandleTutorialFinished;
             }
         }
+        
+        private void HandlePairResolved(PairResult result)
+        {
+            if (pairMatchFeedback != null)
+                pairMatchFeedback.PlayMatchFeedback(result.ComboCountAfter);
+        }
+
         
         private void HandleLevelEnded(EndCause cause)
         {
