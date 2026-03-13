@@ -20,6 +20,7 @@ namespace Core.Services
         public int highScore;
         public long lastUpdatedTicks;
         public bool isVip;
+        public bool tutorialCompleted;
         public long vipExpirationTicks;
         public List<string> ownedCards = new List<string>();
         public List<string> equippedDeck = new List<string>();

@@ -1,143 +1,231 @@
 using System;
 using System.Collections.Generic;
+using DG.Tweening;
+using New_GameplayCore;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace New_GameplayCore.Views
+namespace UI.Views
 {
     public class TutorialPanel : MonoBehaviour
     {
-        [Header("Refs")]
-    [SerializeField] private CanvasGroup canvasGroup;
-    [SerializeField] private Image slideImage;
-    [SerializeField] private TextMeshProUGUI slideText;
-    [SerializeField] private Button nextButton;
-    [SerializeField] private Button prevButton;
-    [SerializeField] private Button closeButton;
+        [Header("Navigation")]
+        [SerializeField] private Button nextButton;
+        [SerializeField] private Button prevButton;
+        [SerializeField] private Button closeButton;
+        [SerializeField] private Button skipButton;
 
-    [Header("Slides")]
-    [SerializeField] private List<TutorialSlideSo> slides = new List<TutorialSlideSo>();
+        [Header("Slide Content")]
+        [SerializeField] private RectTransform slideContainer;
+        [SerializeField] private Image slideImage;
+        [SerializeField] private TextMeshProUGUI slideText;
 
-    private int _currentIndex;
-    private bool _isShowing;
+        [Header("Progress Dots")]
+        [SerializeField] private Transform dotsContainer;
+        [SerializeField] private Image dotPrefab;
+        [SerializeField] private Color dotActive   = Color.white;
+        [SerializeField] private Color dotInactive = new Color(1f, 1f, 1f, 0.3f);
 
-    public event Action OnTutorialFinished;
+        [Header("Animation")]
+        [SerializeField] private CanvasGroup canvasGroup;
+        [SerializeField] private float fadeDuration   = 0.25f;
+        [SerializeField] private float slideDuration  = 0.22f;
+        [SerializeField] private float slideOffsetX   = 900f;
 
-    private void Awake()
-    {
-        if (canvasGroup == null)
-            canvasGroup = GetComponent<CanvasGroup>();
+        [Header("Slides")]
+        [SerializeField] private List<TutorialSlideSo> slides = new();
 
-        SetupButtons();
-        HideImmediate();
-    }
+        private int _currentIndex;
+        private bool _isShowing;
+        private bool _isAnimating;
+        private readonly List<Image> _dots = new();
 
-    private void SetupButtons()
-    {
-        if (nextButton != null)
-            nextButton.onClick.AddListener(OnNextClicked);
+        public event Action OnTutorialFinished;
 
-        if (prevButton != null)
-            prevButton.onClick.AddListener(OnPrevClicked);
-
-        if (closeButton != null)
-            closeButton.onClick.AddListener(FinishTutorial);
-    }
-
-    public void Show()
-    {
-        if (slides == null || slides.Count == 0)
+        private void Awake()
         {
-            FinishTutorial();
-            return;
-        }
-        
-        gameObject.SetActive(true);
+            if (canvasGroup == null)
+                canvasGroup = GetComponent<CanvasGroup>();
 
-        canvasGroup.alpha = 1f;
-        canvasGroup.blocksRaycasts = true;
-        canvasGroup.interactable = true;
+            nextButton?.onClick.AddListener(OnNextClicked);
+            prevButton?.onClick.AddListener(OnPrevClicked);
+            closeButton?.onClick.AddListener(FinishTutorial);
+            skipButton?.onClick.AddListener(FinishTutorial);
 
-        _isShowing = true;
-        _currentIndex = 0;
-        UpdateSlide();
-    }
-
-    public void HideImmediate()
-    {
-        if (canvasGroup != null)
-        {
-            canvasGroup.alpha = 0f;
-            canvasGroup.blocksRaycasts = false;
-            canvasGroup.interactable = false;
+            BuildDots();
+            HideImmediate();
         }
 
-        _isShowing = false;
-    }
-
-    private void UpdateSlide()
-    {
-        if (_currentIndex < 0 || _currentIndex >= slides.Count)
-            return;
-
-        var slide = slides[_currentIndex];
-
-        if (slideImage != null)
-            slideImage.sprite = slide.image;
-
-        if (slideText != null)
+        public void Show()
         {
-            var localized = slideText.GetComponent<LocalizedText>();
-            if (localized != null && !string.IsNullOrEmpty(slide.localizationKey))
+            if (slides == null || slides.Count == 0)
             {
-                localized.key = slide.localizationKey;
-                localized.fallback = slide.description;
-                localized.Refresh();
+                FinishTutorial();
+                return;
             }
-            else
+
+            gameObject.SetActive(true);
+            _isShowing     = true;
+            _isAnimating   = false;
+            _currentIndex  = 0;
+
+            canvasGroup.alpha          = 0f;
+            canvasGroup.blocksRaycasts = true;
+            canvasGroup.interactable   = true;
+
+            RefreshSlide();
+            canvasGroup.DOFade(1f, fadeDuration).SetEase(Ease.OutQuad);
+        }
+
+        public void HideImmediate()
+        {
+            if (canvasGroup != null)
             {
-                slideText.text = slide.description;    
+                canvasGroup.alpha          = 0f;
+                canvasGroup.blocksRaycasts = false;
+                canvasGroup.interactable   = false;
             }
-            
+
+            _isShowing = false;
+            gameObject.SetActive(false);
         }
-        
-        if (prevButton != null)
-            prevButton.gameObject.SetActive(_currentIndex > 0);
 
-        if (nextButton != null)
-            nextButton.gameObject.SetActive(_currentIndex < slides.Count - 1);
-
-        if (closeButton != null)
-            closeButton.gameObject.SetActive(_currentIndex == slides.Count - 1);
-    }
-
-    private void OnNextClicked()
-    {
-        if (!_isShowing) return;
-        if (_currentIndex < slides.Count - 1)
+        private void OnNextClicked()
         {
-            _currentIndex++;
-            UpdateSlide();
-        }
-    }
+            if (!_isShowing || _isAnimating) return;
+            if (_currentIndex >= slides.Count - 1) return;
 
-    private void OnPrevClicked()
-    {
-        if (!_isShowing) return;
-        if (_currentIndex > 0)
+            TransitionTo(_currentIndex + 1, direction: 1);
+        }
+
+        private void OnPrevClicked()
         {
-            _currentIndex--;
-            UpdateSlide();
+            if (!_isShowing || _isAnimating) return;
+            if (_currentIndex <= 0) return;
+
+            TransitionTo(_currentIndex - 1, direction: -1);
         }
-    }
 
-    private void FinishTutorial()
-    {
-        if (!_isShowing) return;
+        private void TransitionTo(int nextIndex, int direction)
+        {
+            if (slideContainer == null)
+            {
+                _currentIndex = nextIndex;
+                RefreshSlide();
+                return;
+            }
 
-        HideImmediate();
-        OnTutorialFinished?.Invoke();
-    }
+            _isAnimating = true;
+
+            slideContainer
+                .DOLocalMoveX(-direction * slideOffsetX, slideDuration)
+                .SetEase(Ease.InQuad)
+                .OnComplete(() =>
+                {
+                    _currentIndex = nextIndex;
+                    RefreshSlide();
+
+                    slideContainer.localPosition = new Vector3(
+                        direction * slideOffsetX,
+                        slideContainer.localPosition.y,
+                        0f);
+
+                    slideContainer
+                        .DOLocalMoveX(0f, slideDuration)
+                        .SetEase(Ease.OutQuad)
+                        .OnComplete(() => _isAnimating = false);
+                });
+        }
+
+        private void RefreshSlide()
+        {
+            if (_currentIndex < 0 || _currentIndex >= slides.Count) return;
+
+            var slide = slides[_currentIndex];
+
+            if (slideImage != null)
+                slideImage.sprite = slide.image;
+
+            if (slideText != null)
+            {
+                var localized = slideText.GetComponent<LocalizedText>();
+                if (localized != null && !string.IsNullOrEmpty(slide.localizationKey))
+                {
+                    localized.key      = slide.localizationKey;
+                    localized.fallback = slide.description;
+                    localized.Refresh();
+                }
+                else
+                {
+                    slideText.text = slide.description;
+                }
+            }
+
+            RefreshButtons();
+            RefreshDots();
+        }
+
+        private void RefreshButtons()
+        {
+            var isLast = _currentIndex == slides.Count - 1;
+
+            prevButton?.gameObject.SetActive(_currentIndex > 0);
+            nextButton?.gameObject.SetActive(!isLast);
+            closeButton?.gameObject.SetActive(isLast);
+        }
+
+        private void RefreshDots()
+        {
+            for (int i = 0; i < _dots.Count; i++)
+            {
+                if (_dots[i] == null) continue;
+                _dots[i].color = i == _currentIndex ? dotActive : dotInactive;
+
+                _dots[i].transform
+                    .DOScale(i == _currentIndex ? 1.3f : 1f, 0.15f)
+                    .SetEase(Ease.OutBack);
+            }
+        }
+
+        private void BuildDots()
+        {
+            if (dotsContainer == null || dotPrefab == null) return;
+
+            foreach (Transform child in dotsContainer)
+                Destroy(child.gameObject);
+
+            _dots.Clear();
+
+            foreach (var _ in slides)
+            {
+                var dot = Instantiate(dotPrefab, dotsContainer);
+                dot.color = dotInactive;
+                _dots.Add(dot);
+            }
+        }
+
+        private void FinishTutorial()
+        {
+            if (!_isShowing) return;
+
+            _isShowing = false;
+
+            canvasGroup
+                .DOFade(0f, fadeDuration)
+                .SetEase(Ease.InQuad)
+                .OnComplete(() =>
+                {
+                    HideImmediate();
+                    OnTutorialFinished?.Invoke();
+                });
+        }
+
+        private void OnDestroy()
+        {
+            DOTween.Kill(canvasGroup);
+            if (slideContainer != null)
+                DOTween.Kill(slideContainer);
+        }
     }
 }

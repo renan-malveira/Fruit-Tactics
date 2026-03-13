@@ -32,6 +32,7 @@ namespace Managers
         public string language = "pt_BR";
         public string dailyDayKey;
         public string lastLoginDayKey;
+        public bool tutorialCompleted;
     }
 
     public class DataSaver : MonoBehaviour

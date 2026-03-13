@@ -35,6 +35,7 @@ namespace UI.Views
         [SerializeField] private ComboTierConfigSo comboTierConfig;
         [SerializeField] private PairMatchFeedback pairMatchFeedback;
         [SerializeField] private DailyMissionsController dailyMissions;
+        [SerializeField] private Managers.DataSaver dataSaver;
         
         private bool _hadInvalidPair;
         public IRuleEngine RuleEngine => _rule;
@@ -71,6 +72,10 @@ namespace UI.Views
             _profileService.Load();
 
             var currentIndex = _profileService.Data.currentLevelIndex;
+            
+            if (dataSaver?.dataToSave?.tutorialCompleted == true)
+                tutorialManager?.MarkCompletedFromRemote();
+
             
             if (levelSet && levelSet.levels.Length > 0)
                 levelConfig = levelSet.levels[Mathf.Clamp(currentIndex, 0, levelSet.levels.Length - 1)];
@@ -110,10 +115,7 @@ namespace UI.Views
         private void Start()
         {
             if (Progress == null)
-            {
-                Debug.LogError("[GameControllerInitializer] Progress is null! Initialization may have failed.");
                 return;
-            }
             
             if (tutorialManager == null)
             {
@@ -124,8 +126,8 @@ namespace UI.Views
             dailyMissions?.ReportSessionStarted();
             
             var levelIndexForTutorial = Progress.CurrentIndex + 1;
-            
-            bool shown = tutorialManager.TryShowTutorial(levelIndexForTutorial);
+
+            var shown = tutorialManager.TryShowTutorial(levelIndexForTutorial);
 
             if (!shown)
             {

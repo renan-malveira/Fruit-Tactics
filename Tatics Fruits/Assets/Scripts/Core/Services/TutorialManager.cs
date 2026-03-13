@@ -1,80 +1,85 @@
 using System;
 using New_GameplayCore;
 using New_GameplayCore.Views;
+using UI.Views;
 using UnityEngine;
 
-public class TutorialManager : MonoBehaviour
+namespace Core.Services
 {
-    [SerializeField] private TutorialPanel tutorialPopup;
-    [SerializeField] private int targetLevel = 1;
-    [SerializeField] private bool showOnFirstLogin = true;
-
-    private const string TutorialFile = "tutorial_data.json";
-    private TutorialData _data;
-
-    public event Action OnTutorialFinished;
-
-    private void Awake()
+    public class TutorialManager : MonoBehaviour
     {
-        _data = JsonDataService.Load<TutorialData>(TutorialFile);
-        if (_data == null)
-            _data = new TutorialData();
+        [SerializeField] private TutorialPanel tutorialPopup;
+        [SerializeField] private int targetLevel = 1;
 
-        if (tutorialPopup != null)
+        private const string TutorialFile = "tutorial_data.json";
+        private TutorialData _data;
+
+        public event Action OnTutorialFinished;
+
+        private void Awake()
         {
-            tutorialPopup.OnTutorialFinished += HandlePopupFinished;
+            _data = JsonDataService.Load<TutorialData>(TutorialFile) ?? new TutorialData();
+
+            if (tutorialPopup != null)
+                tutorialPopup.OnTutorialFinished += HandlePopupFinished;
         }
-        else
+
+        public bool TryShowTutorial(int currentLevel)
         {
-            Debug.LogWarning("[TutorialManager] TutorialPopup não atribuído no Inspector.");
+            if (tutorialPopup == null) return false;
+            if (HasCompletedTutorial()) return false;
+
+            var isFirstLevel  = currentLevel <= 1;
+            var isTargetLevel = currentLevel == targetLevel;
+
+            if (!isFirstLevel && !isTargetLevel) return false;
+
+            tutorialPopup.Show();
+            return true;
         }
-    }
 
-    public bool TryShowTutorial(int currentLevel)
-    {
-        if (tutorialPopup == null)
-            return false;
+        public bool HasCompletedTutorial()
+            => _data != null && _data.tutorialCompleted;
 
-        if (HasCompletedTutorial())
-            return false;
-
-        bool isFirstLogin = IsFirstLogin();
-        bool shouldShow =
-            (showOnFirstLogin && isFirstLogin) ||
-            (currentLevel == targetLevel);
-
-        if (!shouldShow)
-            return false;
-
-        Debug.Log("[TutorialManager] Exibindo tutorial.");
-        tutorialPopup.Show();
-        MarkFirstLoginDone();
-        return true;
-    }
-
-    private void HandlePopupFinished()
-    {
-        _data.tutorialCompleted = true;
-        JsonDataService.Save(TutorialFile, _data);
-        Debug.Log("[TutorialManager] Tutorial finalizado, flag salva.");
-        OnTutorialFinished?.Invoke();
-    }
-
-    private bool HasCompletedTutorial()
-        => _data != null && _data.tutorialCompleted;
-
-    private bool IsFirstLogin()
-        => _data == null || !_data.firstLoginDone;
-
-    private void MarkFirstLoginDone()
-    {
-        if (_data == null)
-            _data = new TutorialData();
-
-        if (!_data.firstLoginDone)
+        public void MarkCompletedFromRemote()
         {
-            _data.firstLoginDone = true;
+            if (_data == null) _data = new TutorialData();
+            if (_data.tutorialCompleted) return;
+
+            _data.tutorialCompleted = true;
             JsonDataService.Save(TutorialFile, _data);
+        }
+
+        public void ResetForTesting()
+        {
+            _data = new TutorialData();
+            JsonDataService.Save(TutorialFile, _data);
+        }
+
+        private void HandlePopupFinished()
+        {
+            _data.tutorialCompleted = true;
+            _data.firstLoginDone    = true;
+            JsonDataService.Save(TutorialFile, _data);
+
+            SyncCompletionToFirebase();
+
+            OnTutorialFinished?.Invoke();
+        }
+
+        private void SyncCompletionToFirebase()
+        {
+            var dataSaver = FindFirstObjectByType<Managers.DataSaver>();
+            if (dataSaver?.dataToSave == null) return;
+
+            dataSaver.dataToSave.tutorialCompleted = true;
+            dataSaver.SaveData(force: true);
+        }
+
+        private void OnDestroy()
+        {
+            if (tutorialPopup != null)
+                tutorialPopup.OnTutorialFinished -= HandlePopupFinished;
         }
     }
 }
