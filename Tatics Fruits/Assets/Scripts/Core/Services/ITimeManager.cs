@@ -50,10 +50,8 @@ namespace Core.Services
         bool TryRefillFromDiscard();
         int DeckCount { get; }
         int DiscardCount { get; }
-        
         int TotalInitialCount { get; }
-        
-        event System.Action<int, int> OnDeckChanged;
+        event Action<int, int> OnDeckChanged;
     }
 
     public interface IHandService
@@ -73,14 +71,16 @@ namespace Core.Services
     {
         bool TryMakePair(CardInstance A, CardInstance B, out PairResult result);
         bool IsValidPair(CardInstance A, CardInstance B);
-        event System.Action<PairResult> OnPairResolved;
-        event System.Action OnInvalidPairAttempt;
+        event Action<PairResult> OnPairResolved;
+        event Action OnInvalidPairAttempt;
     }
 
     public interface ISwapService
     {
         bool TrySwapAll();
         bool TrySwapRandom();
+        event Action<bool, int> OnSwapAllAttempted;
+        event Action<bool, int> OnSwapRandomAttempted;
     }
 
     public interface ITelemetry

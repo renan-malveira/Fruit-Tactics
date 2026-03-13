@@ -1,8 +1,10 @@
+using System;
 using System.Collections.Generic;
 using Core.ScriptableObjects;
-using Core.Services;
+using New_GameplayCore;
+using New_GameplayCore.Services;
 
-namespace New_GameplayCore.Services
+namespace Core.Services
 {
     public class SwapService : ISwapService
     {
@@ -11,72 +13,69 @@ namespace New_GameplayCore.Services
         private readonly ITimeManager _time;
         private readonly LevelConfigSO _cfg;
 
+        public event Action<bool, int> OnSwapAllAttempted;
+        public event Action<bool, int> OnSwapRandomAttempted;
+
         public SwapService(IHandService hand, IDeckService deck, ITimeManager time, LevelConfigSO cfg)
         {
             _hand = hand;
             _deck = deck;
             _time = time;
-            _cfg = cfg;
+            _cfg  = cfg;
         }
 
         public bool TrySwapAll()
         {
-            if (!_time.CanPay(_cfg.swapAllTimePenalty))
-                return false;
+            int penalty = _cfg.swapAllTimePenalty;
 
-            int currentCount = _hand.Cards.Count;
-            if (currentCount == 0)
+            if (!_time.CanPay(penalty) || _hand.Cards.Count == 0)
+            {
+                OnSwapAllAttempted?.Invoke(false, penalty);
                 return false;
+            }
 
-            _time.TryPay(_cfg.swapAllTimePenalty);
-            
+            var currentCount = _hand.Cards.Count;
+            _time.TryPay(penalty);
+
             var toDiscard = new List<CardInstance>(_hand.Cards);
             _hand.RemoveWhere(_ => true, toDiscard);
             _deck.DiscardMany(toDiscard);
-            
+
             var newCards = new List<CardInstance>(currentCount);
             DrawUpTo(currentCount, newCards);
-            
             _hand.AddMany(newCards);
-            
-            return newCards.Count > 0;
+
+            var success = newCards.Count > 0;
+            OnSwapAllAttempted?.Invoke(success, penalty);
+            return success;
         }
-        
-        private void DrawUpTo(int target, IList<CardInstance> buffer)
-        {
-            int remaining = target;
-            
-            int drawn = _deck.DrawMany(remaining, buffer);
-            remaining -= drawn;
-            
-            if (remaining > 0 && _cfg.allowEmptyDeckRefill && _deck.TryRefillFromDiscard())
-            {
-                drawn = _deck.DrawMany(remaining, buffer);
-                remaining -= drawn;
-            }
-        }
-        
+
         public bool TrySwapRandom()
         {
-            if (!_time.CanPay(_cfg.swapRandomTimePenalty))
+            var penalty = _cfg.swapRandomTimePenalty;
+
+            if (!_time.CanPay(penalty))
+            {
+                OnSwapRandomAttempted?.Invoke(false, penalty);
                 return false;
+            }
 
-            _time.TryPay(_cfg.swapRandomTimePenalty);
+            _time.TryPay(penalty);
 
-            if (_hand.Cards.Count == 0) 
+            if (_hand.Cards.Count == 0)
+            {
+                OnSwapRandomAttempted?.Invoke(false, penalty);
                 return false;
+            }
 
-            int idx = UnityEngine.Random.Range(0, _hand.Cards.Count);
+            var idx      = UnityEngine.Random.Range(0, _hand.Cards.Count);
             var toRemove = _hand.Cards[idx];
-            
             _deck.Discard(toRemove);
-            
+
             if (_deck.TryDraw(out var newCard))
             {
                 if (_hand is HandService handService)
-                {
                     handService.ReplaceAt(idx, newCard);
-                }
                 else
                 {
                     _hand.TryRemove(toRemove);
@@ -88,7 +87,21 @@ namespace New_GameplayCore.Services
                 _hand.TryRemove(toRemove);
             }
 
+            OnSwapRandomAttempted?.Invoke(true, penalty);
             return true;
+        }
+
+        private void DrawUpTo(int target, IList<CardInstance> buffer)
+        {
+            var remaining = target;
+            var drawn = _deck.DrawMany(remaining, buffer);
+            remaining -= drawn;
+
+            if (remaining > 0 && _cfg.allowEmptyDeckRefill && _deck.TryRefillFromDiscard())
+            {
+                drawn = _deck.DrawMany(remaining, buffer);
+                remaining -= drawn;
+            }
         }
     }
 }
