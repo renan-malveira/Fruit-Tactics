@@ -1,0 +1,42 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 69aff33fcf794d92a54294792eda83c6, type: 3}
+  m_Name: Level_Fase85
+  m_EditorClassIdentifier: Assembly-CSharp::Core.ScriptableObjects.LevelConfigSo
+  levelId: fase_85
+  displayName: Fase 85
+  description: 
+  targetScore: 3500
+  initialTimeSeconds: 35
+  handSize: 9
+  deckSize: 64
+  timeBonusOnPair: 3
+  swapAllTimePenalty: 10
+  swapRandomTimePenalty: 6
+  allowEmptyDeckRefill: 1
+  deck: {fileID: 0}
+  useFixedSeed: 0
+  fixedSeed: 0
+  scorePerPairBase: 0
+  scorePerCardValueFactor: 10
+  comboWindows: 1500
+  comboMultipliers:
+  - 1
+  - 1.2
+  - 1.5
+  - 2
+  star1Threshold: 0.33
+  star2Threshold: 0.66
+  star3Threshold: 1
+  goldRewardStar1: 70
+  goldRewardStar2: 110
+  goldRewardStar3: 170
