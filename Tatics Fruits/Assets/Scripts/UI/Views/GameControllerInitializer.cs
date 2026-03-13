@@ -34,7 +34,9 @@ namespace UI.Views
         [SerializeField] private AllLevelsCompletedView allLevelsCompletedView;
         [SerializeField] private ComboTierConfigSo comboTierConfig;
         [SerializeField] private PairMatchFeedback pairMatchFeedback;
-
+        [SerializeField] private DailyMissionsController dailyMissions;
+        
+        private bool _hadInvalidPair;
         public IRuleEngine RuleEngine => _rule;
         public IGameController Controller => _controller;
         public bool IsReady { get; private set; }
@@ -96,6 +98,7 @@ namespace UI.Views
             _controller.OnEnterPreRound += HandleEnterPreRound;
             _controller.OnLevelEnded += HandleLevelEnded;
             _controller.OnPairResolved += HandlePairResolved;
+            _rule.OnInvalidPairAttempt += () => _hadInvalidPair = true;
             
             if (pairMatchFeedback != null)
                 _controller.OnPairResolved += result => pairMatchFeedback.PlayMatchFeedback(result.ComboCountAfter);
@@ -117,6 +120,8 @@ namespace UI.Views
                 StartGameplay();
                 return;
             }
+            
+            dailyMissions?.ReportSessionStarted();
             
             var levelIndexForTutorial = Progress.CurrentIndex + 1;
             
@@ -177,8 +182,11 @@ namespace UI.Views
         {
             if (pairMatchFeedback != null)
                 pairMatchFeedback.PlayMatchFeedback(result.ComboCountAfter);
-        }
 
+            dailyMissions?.ReportPairMade();
+            dailyMissions?.ReportComboReached(result.ComboCountAfter);
+        }
+        
         
         private void HandleLevelEnded(EndCause cause)
         {
@@ -229,6 +237,10 @@ namespace UI.Views
             _profileService.AddGold(rewardGold);
             
             Progress.MarkNextUnlockedIfEligible(levelConfig, _score.Total, 0.75f);
+            dailyMissions?.ReportWinLevel(Progress.CurrentIndex + 1);
+            dailyMissions?.ReportScore(_score.Total);
+            dailyMissions?.ReportWinWithoutMistakes(!_hadInvalidPair);
+            _hadInvalidPair = false;
 
             var view = Instantiate(victoryPrefab, uiRoot);
             view.Bind(presenter, model);

@@ -10,12 +10,13 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3753c349b78c45b392fad0e236fef698, type: 3}
-  m_Name: Win Level 2
-  m_EditorClassIdentifier: 
-  id: mission_win_level_2
-  eventType: 1
-  target: 1
-  rewardGold: 120
-  levelParam: 2
-  descriptionKey: mission_win_level
-  descriptionTemplate: 
+  m_Name: Make 20 Pairs
+  m_EditorClassIdentifier: Assembly-CSharp::Core.ScriptableObjects.DailyMissionSo
+  id: MakePairs
+  eventType: 3
+  target: 20
+  rewardGold: 70
+  levelParam: 0
+  missionType: 
+  descriptionKey: 
+  descriptionTemplate: "Fa\xE7a {0} pares"

@@ -182,7 +182,7 @@ namespace Gameplay.Controllers
             if (l.claimed[index]) return false;
             if (l.lastClaimDayKey == TodayKey) return false;
 
-            int rewardCoins = loginConfig != null ? loginConfig.GetReward(index) : l.rewards[index];
+            var rewardCoins = loginConfig != null ? loginConfig.GetReward(index) : l.rewards[index];
             profile.AddGoldAndSave(rewardCoins);
 
             l.claimed[index] = true;
@@ -227,7 +227,7 @@ namespace Gameplay.Controllers
             var st = profile.Data.daily.missions.FirstOrDefault(m => m.missionId == missionId);
             if (st == null || !st.completed || st.claimed) return false;
 
-            int rewardCoins = st.rewardGold;
+            var rewardCoins = st.rewardGold;
             profile.AddGoldAndSave(rewardCoins);
             st.claimed = true;
             profile.SaveProfile();
@@ -241,12 +241,102 @@ namespace Gameplay.Controllers
 
         public DateTime GetNextResetTime() => GetNow().Date.AddDays(1);
 
+        public void ReportPairMade()
+        {
+            ReportSingleIncrement(MissionEventType.MakePairs);
+        }
+
+        public void ReportScore(int totalScore)
+        {
+            var list = profile.Data.daily.missions;
+            if (list == null)
+                return;
+
+            var changed = false;
+            foreach (var st in list)
+            {
+                var def = FindDef(st.missionId);
+                if (def == null ||  def.eventType != MissionEventType.ScorePoints) continue;
+                if (st.completed) continue;
+                
+                st.progress = Mathf.Max(st.progress, totalScore);
+                if (st.progress >= st.target && !st.completed)
+                {
+                    st.completed = true;
+                    changed = true;
+                }
+                else if (st.progress > 0) changed = true;
+            }
+
+            if (changed) Flush();
+        }
+        
+        public void ReportComboReached(int comboCount)
+        {
+            var list = profile.Data.daily.missions;
+            if (list == null) return;
+
+            var changed = false;
+            foreach (var st in list)
+            {
+                var def = FindDef(st.missionId);
+                if (def == null || def.eventType != MissionEventType.ReachCombo) continue;
+                if (st.completed) continue;
+                if (comboCount < def.target) continue;
+
+                st.progress = def.target;
+                st.completed = true;
+                changed = true;
+            }
+
+            if (changed) Flush();
+        }
+
+        public void ReportSessionStarted()
+        {
+            ReportSingleIncrement(MissionEventType.PlaySessions);
+        }
+
+        public void ReportWinWithoutMistakes(bool hadNoMistakes)
+        {
+            if (!hadNoMistakes) return;
+            ReportSingleIncrement(MissionEventType.WinWithoutMistakes);
+        }
+
+        private void ReportSingleIncrement(MissionEventType type)
+        {
+            var list = profile.Data.daily.missions;
+            if (list == null) return;
+
+            var changed = false;
+            foreach (var st in list)
+            {
+                var def = FindDef(st.missionId);
+                if (def == null || def.eventType != type) continue;
+                if (st.completed) continue;
+
+                st.progress = Mathf.Min(st.target, st.progress + 1);
+                changed = true;
+                if (st.progress >= st.target)
+                    st.completed = true;
+            }
+
+            if (changed) Flush();
+        }
+
+        private void Flush()
+        {
+            profile.SaveProfile();
+            OnDailyMissionsChanged?.Invoke();
+            FireAttention();
+        }
+
         public void ReportWinLevel(int level)
         {
             var list = profile.Data.daily.missions;
             if (list == null) return;
 
-            bool changed = false;
+            var changed = false;
             foreach (var st in list)
             {
                 var def = FindDef(st.missionId);
@@ -254,22 +344,13 @@ namespace Gameplay.Controllers
                 if (def.levelParam > 0 && def.levelParam != level) continue;
                 if (st.completed) continue;
 
-                int before = st.progress;
                 st.progress = Mathf.Min(st.target, st.progress + 1);
-                if (st.progress != before) changed = true;
-                if (st.progress >= st.target && !st.completed)
-                {
+                changed = true;
+                if (st.progress >= st.target)
                     st.completed = true;
-                    changed = true;
-                }
             }
 
-            if (changed)
-            {
-                profile.SaveProfile();
-                OnDailyMissionsChanged?.Invoke();
-                FireAttention();
-            }
+            if (changed) Flush();
         }
 
         public bool HasAnyClaimAvailable()

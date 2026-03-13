@@ -10,12 +10,13 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3753c349b78c45b392fad0e236fef698, type: 3}
-  m_Name: Win Level 6
-  m_EditorClassIdentifier: 
-  id: mission_win_level_6
-  eventType: 1
-  target: 1
-  rewardGold: 200
-  levelParam: 6
-  descriptionKey: mission_collect_pairs
-  descriptionTemplate: 
+  m_Name: Score 1000 Points
+  m_EditorClassIdentifier: Assembly-CSharp::Core.ScriptableObjects.DailyMissionSo
+  id: ScorePoints
+  eventType: 2
+  target: 1000
+  rewardGold: 100
+  levelParam: 0
+  missionType: 
+  descriptionKey: 
+  descriptionTemplate: Marque {0} pontos

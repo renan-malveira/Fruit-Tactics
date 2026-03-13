@@ -2,7 +2,15 @@ using UnityEngine;
 
 namespace Core.ScriptableObjects
 {
-    public enum MissionEventType { WinLevel = 1 }
+    public enum MissionEventType
+    {
+        WinLevel          = 1,
+        ScorePoints       = 2,
+        MakePairs         = 3,
+        ReachCombo        = 4,
+        PlaySessions      = 5,
+        WinWithoutMistakes = 6,
+    }
 
     [CreateAssetMenu(menuName = "Game/Daily Mission", fileName = "DailyMission_")]
     public class DailyMissionSo : ScriptableObject
@@ -18,11 +26,8 @@ namespace Core.ScriptableObjects
         public string missionType;
 
         [Header("Localization")]
-        [Tooltip("Chave no arquivo de idiomas. Ex.: mission_win_level")]
         public string descriptionKey;
-
         [TextArea]
-        [Tooltip("Fallback caso a chave não exista. Ex.: \"Vença o nível {0}\"")]
         public string descriptionTemplate = "Vença o nível {0}";
     }
 }
