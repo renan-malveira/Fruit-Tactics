@@ -7,9 +7,9 @@ namespace Ads
     public class AdGatingService : MonoBehaviour, IAdGatingService
     {
         [SerializeField] private DataSaver dataSaver;
-        
+
         public static AdGatingService Instance { get; private set; }
-        
+
         public event Action OnAdStatusChanged;
 
         private void Awake()
@@ -28,6 +28,8 @@ namespace Ads
         {
             if (dataSaver != null)
                 dataSaver.OnRemoteDataChanged += OnRemoteDataChanged;
+
+            RescheduleIfVipActive();
         }
 
         private void OnDestroy()
@@ -39,6 +41,7 @@ namespace Ads
         private void OnRemoteDataChanged(DataToSave _)
         {
             OnAdStatusChanged?.Invoke();
+            RescheduleIfVipActive();
         }
 
         public bool ShouldShowAds()
@@ -54,13 +57,46 @@ namespace Ads
 
             if (dataSaver.dataToSave.vipExpirationTicks == 0)
                 return false;
-            
+
             return DateTime.UtcNow.Ticks >= dataSaver.dataToSave.vipExpirationTicks;
         }
-        
+
+        public void GrantVip(long expirationTicks)
+        {
+            if (dataSaver?.dataToSave == null) return;
+
+            dataSaver.dataToSave.isVip = true;
+            dataSaver.dataToSave.vipExpirationTicks = expirationTicks;
+            dataSaver.SaveData(force: true);
+
+            VipNotificationScheduler.Schedule(expirationTicks);
+            OnAdStatusChanged?.Invoke();
+        }
+
+        public void RevokeVip()
+        {
+            if (dataSaver?.dataToSave == null) return;
+
+            dataSaver.dataToSave.isVip = false;
+            dataSaver.dataToSave.vipExpirationTicks = 0;
+            dataSaver.SaveData(force: true);
+
+            VipNotificationScheduler.CancelAll();
+            OnAdStatusChanged?.Invoke();
+        }
+
         public void NotifyStatusChanged()
         {
             OnAdStatusChanged?.Invoke();
+        }
+
+        private void RescheduleIfVipActive()
+        {
+            if (dataSaver?.dataToSave == null) return;
+            if (!dataSaver.dataToSave.isVip) return;
+            if (dataSaver.dataToSave.vipExpirationTicks <= 0) return;
+
+            VipNotificationScheduler.Schedule(dataSaver.dataToSave.vipExpirationTicks);
         }
     }
 }
