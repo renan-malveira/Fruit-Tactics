@@ -10800,7 +10800,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1157009688
 RectTransform:
   m_ObjectHideFlags: 0
@@ -10861,7 +10861,7 @@ MonoBehaviour:
     m_PressedTrigger: Pressed
     m_SelectedTrigger: Selected
     m_DisabledTrigger: Disabled
-  m_Interactable: 1
+  m_Interactable: 0
   m_TargetGraphic: {fileID: 1157009690}
   m_OnClick:
     m_PersistentCalls:
@@ -12229,6 +12229,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 90903da16ca19e445b2e76f09a14b897, type: 2}
   missionsPerDay: 5
   useLocalTime: 1
+  loginConfig: {fileID: 11400000, guid: 369b5db1831264c488210b6ec62fcdcd, type: 2}
 --- !u!4 &1330019149
 Transform:
   m_ObjectHideFlags: 0
