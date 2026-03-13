@@ -289,12 +289,38 @@ namespace UI.Views
 
         private void ShowAllLevelsCompleted()
         {
-            var view = Instantiate(allLevelsCompletedView, uiRoot);
-            view.Initialize(() =>
+            var totalStars      = Progress.TotalStars(levelSet);
+            var maxStarsPossible = levelSet.levels.Length * 3;
+
+            var model = new AllLevelsCompletedModel
             {
-                SceneManager.LoadScene("MainMenu");
-            });
+                TotalLevels      = levelSet.levels.Length,
+                TotalStars       = totalStars,
+                MaxStarsPossible = maxStarsPossible,
+                FinalScore       = _score.Total
+            };
+
+            Managers.AnalyticsManager.Instance?.TrackButtonClicked(
+                $"all_levels_completed_stars_{totalStars}of{maxStarsPossible}");
+
+            var view = Instantiate(allLevelsCompletedView, uiRoot);
+            view.Initialize(
+                model,
+                onPlayAgain: () =>
+                {
+                    Progress.Reset();
+                    SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+                },
+                onMenuClick: () =>
+                {
+                    SceneManager.LoadScene("MainMenu");
+                },
+                onLeaderboard: () =>
+                {
+                    SceneManager.LoadScene("MainMenu");
+                });
         }
+
 
         private void ShowDefeat()
         {

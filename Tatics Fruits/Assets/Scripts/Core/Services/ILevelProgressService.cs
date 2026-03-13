@@ -1,10 +1,12 @@
 using Core.ScriptableObjects;
+using New_GameplayCore;
 
-namespace New_GameplayCore.Services
+namespace Core.Services
 {
     public interface ILevelProgressService
     {
         int CurrentIndex { get; }
+        int UnlockedMaxIndex { get; }
         LevelConfigSO Current(LevelSetSO set);
         void RecordResult(LevelConfigSO cfg, int totalScore, int stars);
         bool CanAdvance(LevelConfigSO cfg, int totalScore, float unlockPct = 0.75f);
@@ -12,5 +14,7 @@ namespace New_GameplayCore.Services
         void Replay();
         void Save();
         void Load();
+        void Reset();
+        int TotalStars(LevelSetSO set);
     }
 }

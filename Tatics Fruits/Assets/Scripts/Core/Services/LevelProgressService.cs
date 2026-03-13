@@ -1,5 +1,6 @@
 using System;
 using Core.ScriptableObjects;
+using Core.Services;
 using UnityEngine;
 
 namespace New_GameplayCore.Services
@@ -80,5 +81,26 @@ namespace New_GameplayCore.Services
                 Save();
             }
         }
+        
+        public void Reset()
+        {
+            _data = new LevelProgressData();
+            Save();
+        }
+
+        public int TotalStars(LevelSetSO set)
+        {
+            if (set?.levels == null) return 0;
+
+            var total = 0;
+            foreach (var lvl in set.levels)
+            {
+                var id = string.IsNullOrEmpty(lvl.levelId) ? lvl.name : lvl.levelId;
+                if (_data.stars.TryGetValue(id, out var s))
+                    total += s;
+            }
+            return total;
+        }
+
     }
 }
