@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using Core.ScriptableObjects;
 using Core.Services;
+using DG.Tweening;
 using Gameplay.Utils;
 using New_GameplayCore;
 using New_GameplayCore.Services;
@@ -19,9 +20,18 @@ namespace UI.Views
         [SerializeField] private Image fadeBlocker;
         [SerializeField] private TextMeshProUGUI titleText;
         [SerializeField] private TextMeshProUGUI objectiveText;
-        
+        [SerializeField] private TextMeshProUGUI bestScoreText;
+
         [Header("Stars")]
         [SerializeField] private Image star1;
+        [SerializeField] private Image star2;
+        [SerializeField] private Image star3;
+        [SerializeField] private TextMeshProUGUI star1ScoreLabel;
+        [SerializeField] private TextMeshProUGUI star2ScoreLabel;
+        [SerializeField] private TextMeshProUGUI star3ScoreLabel;
+        [SerializeField] private Color starOnColor  = Color.yellow;
+        [SerializeField] private Color starOffColor = new Color(0.4f, 0.4f, 0.4f, 1f);
+        [SerializeField] private float starRevealDelay = 0.08f;
 
         [Header("Buttons")]
         [SerializeField] private Button mainMenuButton;
@@ -29,50 +39,50 @@ namespace UI.Views
 
         [Header("Countdown")]
         private CountdownView _countdown;
-        
+
         private IPreRoundPresenter _presenter;
         private PreRoundModel _model;
 
         public void Bind(IPreRoundPresenter presenter, PreRoundModel model)
         {
             _presenter = presenter;
-            _model = model;
-            
+            _model     = model;
+
             if (titleText)
             {
-                if (!string.IsNullOrEmpty(model.displayName))
-                {
-                    titleText.text = model.displayName;
-                }
-                else
-                {
-                    titleText.text = Localizer.Instance.TrFormat(
-                        "pre_round_play",
-                        "Fase {0}",
-                        model.levelId
-                    );
-                }
+                titleText.text = !string.IsNullOrEmpty(model.displayName)
+                    ? model.displayName
+                    : Localizer.Instance.TrFormat("pre_round_play", "Fase {0}", model.levelId);
             }
-            
+
             if (objectiveText)
             {
                 objectiveText.text = Localizer.Instance.TrFormat(
                     "pre_round_objective",
-                    "Faça <b>{0}</b> pontos em <b>{1}</b> segundos para ganhar as <b>3</b> estrelas!",
+                    "Faça pontos em <b>{1}</b> segundos para ganhar estrelas!",
                     model.targetScore,
-                    model.initialTimeSec
-                );
+                    model.initialTimeSec);
             }
-            
-            SetStar(star1, false);
 
-            if (mainMenuButton)
+            if (bestScoreText)
             {
-                mainMenuButton.onClick.AddListener(() =>
-                {
-                    SceneManager.LoadScene("MainMenu");
-                });
+                bestScoreText.gameObject.SetActive(model.bestScore > 0);
+                if (model.bestScore > 0)
+                    bestScoreText.text = Localizer.Instance.TrFormat(
+                        "pre_round_best",
+                        "Melhor: {0}",
+                        model.bestScore);
             }
+
+            if (star1ScoreLabel) star1ScoreLabel.text = model.star1Score.ToString("N0");
+            if (star2ScoreLabel) star2ScoreLabel.text = model.star2Score.ToString("N0");
+            if (star3ScoreLabel) star3ScoreLabel.text = model.star3Score.ToString("N0");
+
+            SetStarImmediate(star1, model.bestScore >= model.star1Score);
+            SetStarImmediate(star2, model.bestScore >= model.star2Score);
+            SetStarImmediate(star3, model.bestScore >= model.star3Score);
+
+            mainMenuButton?.onClick.AddListener(() => SceneManager.LoadScene("MainMenu"));
 
             if (nextButton)
             {
@@ -81,7 +91,7 @@ namespace UI.Views
             }
 
             gameObject.SetActive(true);
-            StartCoroutine(FadeCanvas(0f, 1f, 0.2f));
+            StartCoroutine(EnterSequence());
         }
 
         public void SetupCountdown(CountdownView countdown)
@@ -89,6 +99,47 @@ namespace UI.Views
             _countdown = countdown;
         }
 
+        private IEnumerator EnterSequence()
+        {
+            yield return FadeCanvas(0f, 1f, 0.2f);
+            yield return RevealStars();
+        }
+
+        private IEnumerator RevealStars()
+        {
+            yield return AnimateStar(star1, _model.bestScore >= _model.star1Score);
+            yield return new WaitForSecondsRealtime(starRevealDelay);
+            yield return AnimateStar(star2, _model.bestScore >= _model.star2Score);
+            yield return new WaitForSecondsRealtime(starRevealDelay);
+            yield return AnimateStar(star3, _model.bestScore >= _model.star3Score);
+        }
+
+        private IEnumerator AnimateStar(Image img, bool achieved)
+        {
+            if (!img) yield break;
+
+            img.color = achieved ? starOnColor : starOffColor;
+            img.transform.localScale = Vector3.zero;
+
+            var tween = img.transform
+                .DOScale(achieved ? 1.25f : 1f, 0.25f)
+                .SetEase(achieved ? Ease.OutBack : Ease.OutQuad);
+
+            if (achieved)
+            {
+                tween.OnComplete(() =>
+                    img.transform.DOScale(1f, 0.12f).SetEase(Ease.InQuad));
+            }
+
+            yield return tween.WaitForCompletion();
+        }
+
+        private void SetStarImmediate(Image img, bool achieved)
+        {
+            if (!img) return;
+            img.color = achieved ? starOnColor : starOffColor;
+            img.transform.localScale = Vector3.zero;
+        }
 
         private void OnStart()
         {
@@ -101,21 +152,17 @@ namespace UI.Views
 
             if (_countdown != null)
                 yield return _countdown.PlayCountdown();
-            
-            
+
             callback?.Invoke();
             Destroy(gameObject);
         }
 
         private IEnumerator FadeCanvas(float from, float to, float dur)
         {
-            if(!canvasGroup)
-                yield break;
-            
-            canvasGroup.alpha = from;
+            if (!canvasGroup) yield break;
 
-            if (fadeBlocker)
-                fadeBlocker.raycastTarget = true;
+            canvasGroup.alpha = from;
+            if (fadeBlocker) fadeBlocker.raycastTarget = true;
 
             var t = 0f;
             while (t < dur)
@@ -124,17 +171,16 @@ namespace UI.Views
                 canvasGroup.alpha = Mathf.Lerp(from, to, t / dur);
                 yield return null;
             }
+
             canvasGroup.alpha = to;
-            if (fadeBlocker)
-                fadeBlocker.raycastTarget = to > 0.99f;
+            if (fadeBlocker) fadeBlocker.raycastTarget = to > 0.99f;
         }
 
-        private void SetStar(Image img, bool on)
+        private void OnDestroy()
         {
-            if(!img)
-                return;
-
-            img.enabled = true;
+            DOTween.Kill(star1?.transform);
+            DOTween.Kill(star2?.transform);
+            DOTween.Kill(star3?.transform);
         }
     }
 }
