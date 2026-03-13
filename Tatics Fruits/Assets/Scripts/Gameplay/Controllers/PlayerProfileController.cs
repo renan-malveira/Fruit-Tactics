@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using Core.SaveSystem;
 using Core.ScriptableObjects;
+using DG.Tweening;
 using Gameplay.Utils;
 using Managers;
 using TMPro;
@@ -32,6 +33,7 @@ namespace Gameplay.Controllers
         [SerializeField] private int deckLimit = 5;
 
         private int _goldHudRefCount = 0;
+        private int _displayedGold = -1;
         private const string NameRegex = @"^[A-Za-zÀ-ÖØ-öø-ÿ\s]+$";
         public bool IsLoaded { get; private set; }
         public event Action OnProfileLoaded;
@@ -165,8 +167,40 @@ namespace Gameplay.Controllers
 
         private void UpdateGoldUI()
         {
-            if (goldText) goldText.text = Data.gold.ToString();
-            OnGoldChanged?.Invoke(Data.gold);
+            var target = Data.gold;
+            OnGoldChanged?.Invoke(target);
+
+            if (!goldText) return;
+
+            if (_displayedGold < 0)
+            {
+                _displayedGold = target;
+                goldText.text  = target.ToString("N0");
+                return;
+            }
+
+            var from = _displayedGold;
+            _displayedGold = target;
+
+            DOTween.Kill(goldText);
+            DOTween.To(
+                () => from,
+                x  =>
+                {
+                    from = x;
+                    goldText.text = x.ToString("N0");
+                },
+                target,
+                0.6f
+            ).SetEase(Ease.OutQuad).SetTarget(goldText);
+
+            if (target > from && goldHudRoot)
+            {
+                DOTween.Kill(goldHudRoot.transform);
+                goldHudRoot.transform
+                    .DOPunchScale(Vector3.one * 0.12f, 0.25f, 1, 0.8f)
+                    .SetTarget(goldHudRoot.transform);
+            }
         }
 
         public void CopyUserIdToClipboard()

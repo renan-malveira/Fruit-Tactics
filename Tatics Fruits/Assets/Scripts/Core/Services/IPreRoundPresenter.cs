@@ -5,7 +5,7 @@ namespace Core.Services
 {
     public interface IPreRoundPresenter
     {
-        PreRoundModel BuildModel(LevelConfigSO cfg, IDeckService deck, PlayerProfileService profileService);
+        PreRoundModel BuildModel(LevelConfigSo cfg, IDeckService deck, PlayerProfileService profileService);
 
         void OnStartClicked();
         void OnBackClicked();

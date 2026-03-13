@@ -17,7 +17,7 @@ namespace UI.Views
 {
     public class GameControllerInitializer : MonoBehaviour
     {
-        [SerializeField] private LevelConfigSO levelConfig;
+        [SerializeField] private LevelConfigSo levelConfig;
         [SerializeField] private DeckConfigSo deckConfig;
         [SerializeField] private HUDView hudView;
         [SerializeField] private HandView handView;
@@ -46,7 +46,7 @@ namespace UI.Views
 
         public IHandService Hand => _hand;
         public IDeckService Deck => _deck;
-        public LevelConfigSO LevelConfig => levelConfig;
+        public LevelConfigSo LevelConfig => levelConfig;
         public IScoreService Score => _score;
         public LevelProgressService Progress;
         public PlayerProfileService Profile => _profileService;
@@ -219,15 +219,13 @@ namespace UI.Views
             VictoryModel model = default;
             presenter.OnModelReady += m => model = m;
             presenter.Build();
-            
+
             var currentLevel = Progress.CurrentIndex;
             var totalScore   = _score.Total;
-            
-            var completed = Progress.CanAdvance(levelConfig, totalScore, 0.75f);
+            var completed    = Progress.CanAdvance(levelConfig, totalScore, 0.75f);
             _profileService.SetLevel(currentLevel, completed);
-            
-            var levelId = GetLevelId();
 
+            var levelId      = GetLevelId();
             var firebaseUid  = Firebase.Auth.FirebaseAuth.DefaultInstance?.CurrentUser?.UserId ?? string.Empty;
             var playerName   = _profileService.Data?.playerName ?? string.Empty;
             var previousBest = _profileService.GetBestScore(levelId);
@@ -235,9 +233,10 @@ namespace UI.Views
             var lbPresenter  = new Services.LeaderboardPresenter(lbRepository);
             lbPresenter.SubmitIfNewBest(firebaseUid, playerName, totalScore, previousBest);
 
-            var rewardGold = model.starsEarned * 10;
+            var rewardGold = levelConfig.GetGoldReward(model.starsEarned);
+            model.goldEarned = rewardGold;
             _profileService.AddGold(rewardGold);
-            
+
             Progress.MarkNextUnlockedIfEligible(levelConfig, _score.Total, 0.75f);
             dailyMissions?.ReportWinLevel(Progress.CurrentIndex + 1);
             dailyMissions?.ReportScore(_score.Total);
@@ -254,38 +253,19 @@ namespace UI.Views
             };
             presenter.OnNext += () =>
             {
-                var currentIndex  = Progress.CurrentIndex;
-                var totalLevels = levelSet.levels.Length;
+                var currentIndex = Progress.CurrentIndex;
+                var totalLevels  = levelSet.levels.Length;
 
                 if (currentIndex >= totalLevels - 1)
-                {
                     ShowAllLevelsCompleted();
-                }
                 else
                 {
                     Progress.Advance(levelSet);
                     SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
                 }
             };
-            
-            var timeSpent = levelConfig.initialTimeSeconds - _time.TimeLeftSeconds;
-            Managers.AnalyticsManager.Instance?.TrackLevelCompleted(
-                Progress.CurrentIndex + 1,
-                totalScore,
-                model.starsEarned,
-                timeSpent,
-                true
-            );
-            
-            if (rewardGold > 0)
-            {
-                Managers.AnalyticsManager.Instance?.TrackCurrencyEarned(
-                    rewardGold,
-                    "level_complete",
-                    "gold"
-                );
-            }
         }
+
 
         private void ShowAllLevelsCompleted()
         {

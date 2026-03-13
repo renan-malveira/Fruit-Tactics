@@ -29,7 +29,7 @@ namespace UI.Views
         [SerializeField] private float tickMinDelta = 0.2f;
 
         private IScoreService _score;
-        private LevelConfigSO _cfg;
+        private LevelConfigSo _cfg;
         private float _lastPct = -1f;
 
         private bool _star1Shown, _star2Shown, _star3Shown;

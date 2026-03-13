@@ -7,9 +7,9 @@ namespace Core.Services
     {
         int CurrentIndex { get; }
         int UnlockedMaxIndex { get; }
-        LevelConfigSO Current(LevelSetSO set);
-        void RecordResult(LevelConfigSO cfg, int totalScore, int stars);
-        bool CanAdvance(LevelConfigSO cfg, int totalScore, float unlockPct = 0.75f);
+        LevelConfigSo Current(LevelSetSO set);
+        void RecordResult(LevelConfigSo cfg, int totalScore, int stars);
+        bool CanAdvance(LevelConfigSo cfg, int totalScore, float unlockPct = 0.75f);
         void Advance(LevelSetSO set);
         void Replay();
         void Save();

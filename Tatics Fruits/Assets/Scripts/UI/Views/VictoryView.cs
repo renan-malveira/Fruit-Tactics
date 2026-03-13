@@ -1,5 +1,7 @@
 using System.Collections;
 using Core.Services;
+using Cysharp.Threading.Tasks;
+using DG.Tweening;
 using Gameplay.Utils;
 using New_GameplayCore.Services;
 using TMPro;
@@ -22,6 +24,13 @@ namespace UI.Views
         [SerializeField] private Image star3;
         [SerializeField] private Sprite starOn;
         [SerializeField] private Sprite starOff;
+
+        [Header("Gold Reward")]
+        [SerializeField] private GameObject goldRewardRoot;
+        [SerializeField] private TextMeshProUGUI goldRewardText;
+        [SerializeField] private RectTransform goldRewardRect;
+        [SerializeField] private float goldRollupDuration = 0.8f;
+        [SerializeField] private float goldRevealDelay    = 0.25f;
 
         [Header("Animation")]
         [SerializeField] private StarRevealAnimator starAnimator;
@@ -56,6 +65,9 @@ namespace UI.Views
                     ? Localizer.Instance.Tr("victory_new_record", "Novo Recorde!")
                     : Localizer.Instance.TrFormat("victory_previous_record", "{0}", model.bestBefore);
             }
+
+            if (goldRewardRoot)
+                goldRewardRoot.SetActive(false);
 
             AssignStarSprites(model.starsEarned);
             SetButtonsInteractable(false);
@@ -112,12 +124,55 @@ namespace UI.Views
             };
 
             if (starAnimator != null)
-                starAnimator.RevealSequence(images, earned, starStaggerDelay, () => SetButtonsInteractable(true));
+                starAnimator.RevealSequence(images, earned, starStaggerDelay,
+                    () => StartCoroutine(ShowGoldReward(model)));
             else
             {
                 foreach (var img in images) if (img) img.enabled = true;
-                SetButtonsInteractable(true);
+                StartCoroutine(ShowGoldReward(model));
             }
+        }
+
+        private IEnumerator ShowGoldReward(VictoryModel model)
+        {
+            if (model.goldEarned <= 0)
+            {
+                SetButtonsInteractable(true);
+                yield break;
+            }
+
+            yield return new WaitForSeconds(goldRevealDelay);
+
+            if (goldRewardRoot)
+            {
+                goldRewardRoot.SetActive(true);
+                goldRewardRoot.transform.localScale = Vector3.zero;
+                goldRewardRoot.transform
+                    .DOScale(1f, 0.3f)
+                    .SetEase(Ease.OutBack);
+            }
+
+            if (goldRewardText)
+            {
+                var elapsed = 0f;
+                while (elapsed < goldRollupDuration)
+                {
+                    elapsed += Time.unscaledDeltaTime;
+                    var display = Mathf.RoundToInt(
+                        Mathf.Lerp(0, model.goldEarned, Mathf.Clamp01(elapsed / goldRollupDuration)));
+                    goldRewardText.text = $"+{display}";
+                    yield return null;
+                }
+                goldRewardText.text = $"+{model.goldEarned}";
+            }
+
+            if (CoinCollectFx.Instance != null && goldRewardRect != null)
+            {
+                yield return UniTask.ToCoroutine(() =>
+                    CoinCollectFx.Instance.PlayFromUI(goldRewardRect, model.goldEarned));
+            }
+
+            SetButtonsInteractable(true);
         }
 
         private IEnumerator FadePanel(float from, float to, float duration)
@@ -128,8 +183,8 @@ namespace UI.Views
             var elapsed = 0f;
             while (elapsed < duration)
             {
-                elapsed       += Time.unscaledDeltaTime;
-                canvasGroup.alpha = Mathf.Lerp(from, to, Mathf.Clamp01(elapsed / duration));
+                elapsed           += Time.unscaledDeltaTime;
+                canvasGroup.alpha  = Mathf.Lerp(from, to, Mathf.Clamp01(elapsed / duration));
                 yield return null;
             }
             canvasGroup.alpha = to;
@@ -143,11 +198,14 @@ namespace UI.Views
             while (elapsed < scoreCountDuration)
             {
                 elapsed += Time.unscaledDeltaTime;
-                var display = Mathf.RoundToInt(Mathf.Lerp(0, targetScore, Mathf.Clamp01(elapsed / scoreCountDuration)));
-                scoreText.text = Localizer.Instance.TrFormat("victory_score_line", "Você fez: {0} pontos!", display);
+                var display = Mathf.RoundToInt(
+                    Mathf.Lerp(0, targetScore, Mathf.Clamp01(elapsed / scoreCountDuration)));
+                scoreText.text = Localizer.Instance.TrFormat(
+                    "victory_score_line", "Você fez: {0} pontos!", display);
                 yield return null;
             }
-            scoreText.text = Localizer.Instance.TrFormat("victory_score_line", "Você fez: {0} pontos!", targetScore);
+            scoreText.text = Localizer.Instance.TrFormat(
+                "victory_score_line", "Você fez: {0} pontos!", targetScore);
         }
 
         private void SetButtonsInteractable(bool interactable)

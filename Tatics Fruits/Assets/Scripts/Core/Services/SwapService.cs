@@ -11,12 +11,12 @@ namespace Core.Services
         private readonly IHandService _hand;
         private readonly IDeckService _deck;
         private readonly ITimeManager _time;
-        private readonly LevelConfigSO _cfg;
+        private readonly LevelConfigSo _cfg;
 
         public event Action<bool, int> OnSwapAllAttempted;
         public event Action<bool, int> OnSwapRandomAttempted;
 
-        public SwapService(IHandService hand, IDeckService deck, ITimeManager time, LevelConfigSO cfg)
+        public SwapService(IHandService hand, IDeckService deck, ITimeManager time, LevelConfigSo cfg)
         {
             _hand = hand;
             _deck = deck;

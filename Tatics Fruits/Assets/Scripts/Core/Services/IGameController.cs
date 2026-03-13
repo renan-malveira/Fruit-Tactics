@@ -12,7 +12,7 @@ namespace Core.Services
         event Action OnExitPreRound;
         event Action<EndCause> OnLevelEnded;
         event Action<PairResult> OnPairResolved;
-        void StartLevel(LevelConfigSO cfg, DeckConfigSo deckCfg);
+        void StartLevel(LevelConfigSo cfg, DeckConfigSo deckCfg);
         void UpdateTick(float deltaTime);
         void OnCardSelected(CardInstance card);
         void BeginPlayFromPreRound(PreRoundModel model);

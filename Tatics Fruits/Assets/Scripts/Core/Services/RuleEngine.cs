@@ -12,13 +12,13 @@ namespace Core.Services
         private readonly IScoreService _score;
         private readonly ITimeManager _time;
         private readonly IComboTracker _combo;
-        private readonly LevelConfigSO _cfg;
+        private readonly LevelConfigSo _cfg;
 
         public event Action<PairResult> OnPairResolved;
         public event Action OnInvalidPairAttempt;
 
         public RuleEngine(IHandService hand, IDeckService deck, IScoreService score, 
-            ITimeManager time, IComboTracker combo, LevelConfigSO cfg)
+            ITimeManager time, IComboTracker combo, LevelConfigSo cfg)
         {
             _hand = hand;
             _deck = deck;

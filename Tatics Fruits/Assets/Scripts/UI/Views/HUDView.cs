@@ -60,7 +60,7 @@ namespace UI.Views
         private MMScaleShaker _clockShaker;
         private bool _isInDangerZone;
 
-        public void Initialize(ITimeManager time, IScoreService score, ISwapService swap, IComboTracker comboTracker, LevelConfigSO levelConfig, ComboTierConfigSo tierConfig = null)
+        public void Initialize(ITimeManager time, IScoreService score, ISwapService swap, IComboTracker comboTracker, LevelConfigSo levelConfig, ComboTierConfigSo tierConfig = null)
         {
             _time         = time;
             _score        = score;

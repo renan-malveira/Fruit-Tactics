@@ -7,7 +7,7 @@ namespace Gameplay.GameState
 {
     public class ComboTracker : IComboTracker
     {
-        private readonly LevelConfigSO _cfg;
+        private readonly LevelConfigSo _cfg;
         private readonly ComboTierConfigSo _tierConfig;
         private float _timer;
         private bool _active;
@@ -20,7 +20,7 @@ namespace Gameplay.GameState
         public event Action<int> OnComboChanged;
         public event Action<int, ComboTierConfigSo.ComboTier> OnComboTierChanged;
 
-        public ComboTracker(LevelConfigSO cfg, ComboTierConfigSo tierConfig = null)
+        public ComboTracker(LevelConfigSo cfg, ComboTierConfigSo tierConfig = null)
         {
             _cfg = cfg;
             _tierConfig = tierConfig;

@@ -30,7 +30,7 @@ namespace New_GameplayCore.Services
             Save();
         }
 
-        public LevelConfigSO Current(LevelSetSO set)
+        public LevelConfigSo Current(LevelSetSO set)
         {
             if(set == null || set.levels == null || set.levels.Length == 0)
                 return null;
@@ -39,7 +39,7 @@ namespace New_GameplayCore.Services
             return set.levels[_data.currentIndex];
         }
 
-        public void RecordResult(LevelConfigSO cfg, int totalScore, int stars)
+        public void RecordResult(LevelConfigSo cfg, int totalScore, int stars)
         {
             var id = string.IsNullOrEmpty(cfg.levelId) ? cfg.name : cfg.levelId;
             if(!_data.best.TryGetValue(id, out var prev) || totalScore > prev)
@@ -48,7 +48,7 @@ namespace New_GameplayCore.Services
             _data.stars[id] = Mathf.Max(_data.stars.ContainsKey(id) ?  _data.stars[id] : 0, Mathf.Clamp(stars, 0,3));
         }
 
-        public bool CanAdvance(LevelConfigSO cfg, int totalScore, float unlockPct = 0.75f)
+        public bool CanAdvance(LevelConfigSo cfg, int totalScore, float unlockPct = 0.75f)
         {
             if (cfg.targetScore <= 0)
                 return false;
@@ -69,7 +69,7 @@ namespace New_GameplayCore.Services
 
         public void Replay() => Save();
 
-        public void MarkNextUnlockedIfEligible(LevelConfigSO cfg, int totalScore, float unlockPct = 0.75f)
+        public void MarkNextUnlockedIfEligible(LevelConfigSo cfg, int totalScore, float unlockPct = 0.75f)
         {
             if(cfg == null || cfg.targetScore <= 0)
                 return;

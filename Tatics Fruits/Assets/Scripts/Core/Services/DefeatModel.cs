@@ -20,7 +20,7 @@ namespace Core.Services
 
     public class DefeatPresenter
     {
-        private readonly LevelConfigSO _cfg;
+        private readonly LevelConfigSo _cfg;
         private readonly IScoreService _score;
         private readonly ITimeManager _time;
         private readonly PlayerProfileService _profileService;
@@ -32,7 +32,7 @@ namespace Core.Services
         public void ClickReplay() => OnReplay?.Invoke();
         public void ClickMenu() => OnMenu?.Invoke();
 
-        public DefeatPresenter(LevelConfigSO cfg,
+        public DefeatPresenter(LevelConfigSo cfg,
             IScoreService score,
             ITimeManager time,
             PlayerProfileService profileService)

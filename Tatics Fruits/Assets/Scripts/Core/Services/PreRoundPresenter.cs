@@ -9,7 +9,7 @@ namespace Core.Services
     public class PreRoundPresenter : IPreRoundPresenter
     {
         private readonly GameController _controller;
-        private readonly LevelConfigSO _cfg;
+        private readonly LevelConfigSo _cfg;
         private readonly IDeckService _deck;
         private readonly PlayerProfileService _profileService;
         private PreRoundModel _model;
@@ -17,7 +17,7 @@ namespace Core.Services
         public System.Action<PreRoundModel> OnModelReady;
         public System.Action OnRequestClose;
 
-        public PreRoundPresenter(GameController controller, LevelConfigSO cfg, IDeckService deck,
+        public PreRoundPresenter(GameController controller, LevelConfigSo cfg, IDeckService deck,
             PlayerProfileService profileService)
         {
             _controller = controller;
@@ -26,7 +26,7 @@ namespace Core.Services
             _profileService = profileService;
         }
 
-        public PreRoundModel BuildModel(LevelConfigSO cfg, IDeckService deck, PlayerProfileService profileService)
+        public PreRoundModel BuildModel(LevelConfigSo cfg, IDeckService deck, PlayerProfileService profileService)
         {
             var total = 0;
             var list = new System.Collections.Generic.List<DeckEntrySummary>();

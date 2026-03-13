@@ -9,7 +9,7 @@ namespace Core.Services
 {
     public class VictoryPresenter
     {
-        private readonly LevelConfigSO _cfg;
+        private readonly LevelConfigSo _cfg;
         private readonly IScoreService _score;
         private readonly ITimeManager  _time;
         private readonly PlayerProfileService _profileService;
@@ -21,7 +21,7 @@ namespace Core.Services
         public event Action OnReplay;
 
         public VictoryPresenter(
-            LevelConfigSO cfg,
+            LevelConfigSo cfg,
             ScoreService score,
             ITimeManager time,
             PlayerProfileService profileService,

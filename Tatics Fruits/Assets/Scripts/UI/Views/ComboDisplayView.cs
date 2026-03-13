@@ -44,7 +44,7 @@ namespace UI.Views
 
         public void Initialize(
             IComboTracker comboTracker,
-            LevelConfigSO levelConfig,
+            LevelConfigSo levelConfig,
             ComboTierConfigSo tierConfig)
         {
             _comboTracker = comboTracker;

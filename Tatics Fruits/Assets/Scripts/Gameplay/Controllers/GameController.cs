@@ -21,7 +21,7 @@ namespace Gameplay.Controllers
         private readonly IRuleEngine _rule;
         private readonly ISwapService _swap;
         private readonly IComboTracker _combo;
-        private LevelConfigSO _cfg;
+        private LevelConfigSo _cfg;
         private readonly IScoreService _score;
 
         private CardInstance? _selectedCard = null;
@@ -38,7 +38,7 @@ namespace Gameplay.Controllers
 
         public GameController(IGameStateMachine fsm, ITimeManager time, IDeckService deck,
             IHandService hand, IRuleEngine rule, ISwapService swap, IComboTracker combo,
-            LevelConfigSO cfg, ScoreService score)
+            LevelConfigSo cfg, ScoreService score)
         {
             _fsm = fsm;
             _time = time;
@@ -85,7 +85,7 @@ namespace Gameplay.Controllers
             OnComboTierChanged?.Invoke(comboCount, tier);
         }
 
-        public void StartLevel(LevelConfigSO cfg, DeckConfigSo deckCfg)
+        public void StartLevel(LevelConfigSo cfg, DeckConfigSo deckCfg)
         {
             _cfg = cfg;
             var rng = cfg.useFixedSeed ? new Random(cfg.fixedSeed) : new Random();

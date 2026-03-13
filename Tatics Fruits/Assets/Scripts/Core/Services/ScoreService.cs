@@ -8,7 +8,7 @@ namespace New_GameplayCore.Services
 {
     public class ScoreService : IScoreService
     {
-        private readonly LevelConfigSO _cfg;
+        private readonly LevelConfigSo _cfg;
         private int _total;
         private int _currentCombo;
         private int _bestCombo;
@@ -19,7 +19,7 @@ namespace New_GameplayCore.Services
         
         public event Action<int, int> OnScoreChanged;
 
-        public ScoreService(LevelConfigSO cfg)
+        public ScoreService(LevelConfigSo cfg)
         {
             _cfg = cfg;
         }
