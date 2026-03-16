@@ -20,20 +20,21 @@ namespace Core.Services
         public PreRoundPresenter(GameController controller, LevelConfigSo cfg, IDeckService deck,
             PlayerProfileService profileService)
         {
-            _controller = controller;
-            _cfg = cfg;
-            _deck = deck;
+            _controller     = controller;
+            _cfg            = cfg;
+            _deck           = deck;
             _profileService = profileService;
         }
 
         public PreRoundModel BuildModel(LevelConfigSo cfg, IDeckService deck, PlayerProfileService profileService)
         {
-            var total = 0;
+            var total = deck.TotalInitialCount;
             var list = new System.Collections.Generic.List<DeckEntrySummary>();
-            foreach (var e in cfg.deck.entries)
+
+            if (cfg.deck != null && cfg.deck.entries != null)
             {
-                list.Add(new DeckEntrySummary { type = e.type, quantity = e.quantity });
-                total += e.quantity;
+                foreach (var e in cfg.deck.entries)
+                    list.Add(new DeckEntrySummary { type = e.type, quantity = e.quantity });
             }
 
             var s1 = Mathf.CeilToInt(cfg.targetScore * cfg.star1Threshold);

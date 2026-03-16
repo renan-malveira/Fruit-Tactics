@@ -1453,7 +1453,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &241955250
 RectTransform:
   m_ObjectHideFlags: 0
@@ -4551,7 +4551,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TutorialManager
   tutorialPopup: {fileID: 1764245137}
   targetLevel: 1
-  showOnFirstLogin: 1
 --- !u!1 &1101158351
 GameObject:
   m_ObjectHideFlags: 0
@@ -6695,6 +6694,9 @@ MonoBehaviour:
   countdownView: {fileID: 241955251}
   allLevelsCompletedView: {fileID: 8590934228772649784, guid: db5f22bac4e24224ca9a8f951dcf469b, type: 3}
   comboTierConfig: {fileID: 11400000, guid: c3fe894c83ab7bf4aa35c5f3d4aaf8fc, type: 2}
+  pairMatchFeedback: {fileID: 0}
+  dailyMissions: {fileID: 0}
+  dataSaver: {fileID: 0}
 --- !u!1001 &1448547642
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -8048,10 +8050,14 @@ MonoBehaviour:
   comboTierText: {fileID: 1646121061}
   comboCountText: {fileID: 857372213}
   comboProgressBar: {fileID: 1539142246}
+  progressFillImage: {fileID: 0}
+  screenFlashOverlay: {fileID: 0}
+  flashInDuration: 0.05
+  flashOutDuration: 0.25
+  vfxRoot: {fileID: 0}
+  tierUpFeedback: {fileID: 0}
   fillAnimationDuration: 0.3
   fillEase: 9
-  punchScale: 1
-  punchDuration: 0.3
 --- !u!1 &1646121059
 GameObject:
   m_ObjectHideFlags: 0
@@ -8805,7 +8811,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &1764245133
 RectTransform:
   m_ObjectHideFlags: 0
@@ -8894,12 +8900,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 22168a1e6a954d47aa55403651e2c28b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::New_GameplayCore.Views.TutorialPanel
-  canvasGroup: {fileID: 1764245136}
-  slideImage: {fileID: 1837878628}
-  slideText: {fileID: 222071976}
   nextButton: {fileID: 1297617741}
   prevButton: {fileID: 665686817}
   closeButton: {fileID: 775500848}
+  skipButton: {fileID: 0}
+  slideContainer: {fileID: 0}
+  slideImage: {fileID: 1837878628}
+  slideText: {fileID: 222071976}
+  dotsContainer: {fileID: 0}
+  dotPrefab: {fileID: 0}
+  dotActive: {r: 1, g: 1, b: 1, a: 1}
+  dotInactive: {r: 1, g: 1, b: 1, a: 0.3}
+  canvasGroup: {fileID: 1764245136}
+  fadeDuration: 0.25
+  slideDuration: 0.22
+  slideOffsetX: 900
   slides:
   - {fileID: 11400000, guid: 2ca625da42102564e9379e100a0fa5d5, type: 2}
   - {fileID: 11400000, guid: 9ef549a60122ae745be13f3b4f1bb647, type: 2}
@@ -14889,6 +14904,12 @@ MonoBehaviour:
   swapOneButton: {fileID: 1201055234}
   timeDeltaAnchor: {fileID: 94323881}
   timeDeltaToast: {fileID: 2981652402924991672, guid: d2c14d4142eca4c4ebc0ff2a3718f809, type: 3}
+  swapAllCostLabel: {fileID: 0}
+  swapOneCostLabel: {fileID: 0}
+  penaltyFlashOverlay: {fileID: 0}
+  flashPeakAlpha: 0.35
+  flashInDuration: 0.06
+  flashOutDuration: 0.22
   clockObject: {fileID: 9022809906991244056}
   shakeThreshold: 10
   idleShakeSpeed: 10
@@ -14898,6 +14919,8 @@ MonoBehaviour:
   scoreFeedback: {fileID: 1381425715}
   swapAllFeedback: {fileID: 456065601}
   swapOneFeedback: {fileID: 1201055237}
+  swapFailFeedback: {fileID: 0}
+  swapCooldownSeconds: 0.5
   comboDisplay: {fileID: 1625284258}
 --- !u!222 &48806441947852642
 CanvasRenderer:

@@ -153,13 +153,19 @@ namespace Ads
 
         public void ToggleTestMode()
         {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             testMode = !testMode;
             ResetAdTimer();
+#endif
         }
 
         public bool IsTestModeEnabled()
         {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             return testMode;
+#else
+            return false;
+#endif
         }
 
         public void ForceShowAd()

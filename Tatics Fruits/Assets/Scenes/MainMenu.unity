@@ -11319,6 +11319,7 @@ MonoBehaviour:
     language: pt_BR
     dailyDayKey: 
     lastLoginDayKey: 
+    tutorialCompleted: 0
   createCloudIfMissing: 1
   enableRealtimeSync: 1
   smartMerger: 1
@@ -19374,8 +19375,8 @@ MonoBehaviour:
   m_fontSizeBase: 24
   m_fontWeight: 400
   m_enableAutoSizing: 1
-  m_fontSizeMin: 43.200005
-  m_fontSizeMax: 172.80002
+  m_fontSizeMin: 10.800001
+  m_fontSizeMax: 43.200005
   m_fontStyle: 1
   m_HorizontalAlignment: 2
   m_VerticalAlignment: 512
