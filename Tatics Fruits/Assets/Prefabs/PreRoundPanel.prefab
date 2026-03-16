@@ -457,7 +457,6 @@ GameObject:
   - component: {fileID: 8863179169749281067}
   - component: {fileID: 336733963417917397}
   - component: {fileID: 585340575718451582}
-  - component: {fileID: 7356158218061515460}
   m_Layer: 5
   m_Name: Star Score II
   m_TagString: Untagged
@@ -584,20 +583,6 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
---- !u!114 &7356158218061515460
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2039620954494735051}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fc125989bb1a48908ae57f58c2516fdd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::LocalizedText
-  key: pre_round_play
-  fallback: 
 --- !u!1 &2915492205311578025
 GameObject:
   m_ObjectHideFlags: 0
@@ -1244,7 +1229,6 @@ GameObject:
   - component: {fileID: 1996650592604996577}
   - component: {fileID: 2254737663842234467}
   - component: {fileID: 4339705010118402715}
-  - component: {fileID: 717371596104763346}
   m_Layer: 5
   m_Name: Star Score I
   m_TagString: Untagged
@@ -1371,20 +1355,6 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
---- !u!114 &717371596104763346
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7587121214248446191}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fc125989bb1a48908ae57f58c2516fdd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::LocalizedText
-  key: pre_round_play
-  fallback: 
 --- !u!1 &8042261245731278924
 GameObject:
   m_ObjectHideFlags: 0
@@ -1583,7 +1553,6 @@ GameObject:
   - component: {fileID: 5281297617355427322}
   - component: {fileID: 2077747024926013071}
   - component: {fileID: 3964101080532071017}
-  - component: {fileID: 2855301612327201093}
   m_Layer: 5
   m_Name: Star Score III
   m_TagString: Untagged
@@ -1710,20 +1679,6 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
---- !u!114 &2855301612327201093
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8795169783037460636}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fc125989bb1a48908ae57f58c2516fdd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::LocalizedText
-  key: pre_round_play
-  fallback: 
 --- !u!1 &9107661800626363349
 GameObject:
   m_ObjectHideFlags: 0

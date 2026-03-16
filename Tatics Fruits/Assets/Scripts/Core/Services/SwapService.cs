@@ -60,8 +60,6 @@ namespace Core.Services
                 return false;
             }
 
-            _time.TryPay(penalty);
-
             if (_hand.Cards.Count == 0)
             {
                 OnSwapRandomAttempted?.Invoke(false, penalty);
@@ -70,21 +68,28 @@ namespace Core.Services
 
             var idx      = UnityEngine.Random.Range(0, _hand.Cards.Count);
             var toRemove = _hand.Cards[idx];
+            
+            bool drew = _deck.TryDraw(out var newCard);
+
+            if (!drew && _cfg.allowEmptyDeckRefill && _deck.TryRefillFromDiscard())
+                drew = _deck.TryDraw(out newCard);
+            
+            if (!drew)
+            {
+                OnSwapRandomAttempted?.Invoke(false, penalty);
+                return false;
+            }
+
+            _time.TryPay(penalty);
+            
             _deck.Discard(toRemove);
 
-            if (_deck.TryDraw(out var newCard))
-            {
-                if (_hand is HandService handService)
-                    handService.ReplaceAt(idx, newCard);
-                else
-                {
-                    _hand.TryRemove(toRemove);
-                    _hand.TryAdd(newCard);
-                }
-            }
+            if (_hand is HandService handService)
+                handService.ReplaceAt(idx, newCard);
             else
             {
                 _hand.TryRemove(toRemove);
+                _hand.TryAdd(newCard);
             }
 
             OnSwapRandomAttempted?.Invoke(true, penalty);

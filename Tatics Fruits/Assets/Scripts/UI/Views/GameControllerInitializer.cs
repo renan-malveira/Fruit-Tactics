@@ -236,6 +236,12 @@ namespace UI.Views
             var rewardGold = levelConfig.GetGoldReward(model.starsEarned);
             model.goldEarned = rewardGold;
             _profileService.AddGold(rewardGold);
+            
+            if (dataSaver != null && dataSaver.dataToSave != null)
+            {
+                dataSaver.AddCoins(rewardGold);
+                dataSaver.SaveData(force: true);
+            }
 
             Progress.MarkNextUnlockedIfEligible(levelConfig, _score.Total, 0.75f);
             dailyMissions?.ReportWinLevel(Progress.CurrentIndex + 1);
