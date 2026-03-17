@@ -23,7 +23,7 @@ MonoBehaviour:
   swapAllTimePenalty: 10
   swapRandomTimePenalty: 6
   allowEmptyDeckRefill: 1
-  deck: {fileID: 0}
+  deck: {fileID: 11400000, guid: 4fdfa606b6387934b9eae4a7424a8fe9, type: 2}
   useFixedSeed: 0
   fixedSeed: 0
   scorePerPairBase: 0
