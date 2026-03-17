@@ -73,11 +73,14 @@ namespace Gameplay.Utils
         public List<int> unlockedAvatars =  new List<int> {0};
         public List<int> purchasedAvatars =  new List<int>();
         public string firebaseUserId;
+        
+        public long lastUpdatedTicks;
 
         public string GetFileName() => "player_profile.json";
 
         public void OnBeforeSave()
         {
+            lastUpdatedTicks = DateTime.UtcNow.Ticks;
         }
 
         public void OnAfterLoad()

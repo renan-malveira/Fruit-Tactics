@@ -60,6 +60,8 @@ namespace Gameplay.Controllers
             if (dataSaver != null)
                 dataSaver.OnRemoteDataChanged += OnRemoteDataChanged;
             
+            SyncToFirebase();
+            
             ApplyProfileUI();
             UpdateGoldUI();
             UpdateLevelUI();
@@ -77,6 +79,13 @@ namespace Gameplay.Controllers
 
         private void OnRemoteDataChanged(DataToSave remoteData)
         {
+            if (dataSaver != null &&
+                remoteData.lastUpdatedTicks > 0 &&
+                remoteData.lastUpdatedTicks <= dataSaver.dataToSave.lastUpdatedTicks)
+            {
+                return;
+            }
+
             Data.gold = remoteData.totalCoins;
             Data.currentLevelIndex = remoteData.crrLevel;
             Data.playerName = remoteData.userName;
@@ -311,6 +320,9 @@ namespace Gameplay.Controllers
             dataSaver.dataToSave.sfxOn = Data.sfxOn;
             dataSaver.dataToSave.vfxOn = Data.vfxOn;
             dataSaver.dataToSave.language = Data.language;
+            
+            if (Data.lastUpdatedTicks > 0)
+                dataSaver.dataToSave.lastUpdatedTicks = Data.lastUpdatedTicks;
 
             dataSaver.SaveData(force: true);
         }

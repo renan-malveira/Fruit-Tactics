@@ -307,10 +307,10 @@ namespace Managers
 
         private DataToSave ResolveDataConflict(DataToSave local, DataToSave cloud)
         {
-            if (cloud != null)
-                return cloud;
+            if (local != null && cloud != null)
+                return local.lastUpdatedTicks >= cloud.lastUpdatedTicks ? local : cloud;
 
-            return local;
+            return cloud ?? local;
         }
 
         private DataToSave CreateNewDefaultData()
@@ -356,8 +356,6 @@ namespace Managers
 
         private void ApplyPatchLocally(Dictionary<string, object> patch)
         {
-            // Mantive bem simples: só os campos mais comuns.
-            // Se quiser, eu completo com todos.
             foreach (var kv in patch)
             {
                 switch (kv.Key)

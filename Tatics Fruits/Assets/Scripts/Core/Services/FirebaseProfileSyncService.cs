@@ -151,41 +151,47 @@ namespace Core.Services
         {
             if (_profileController == null || _profileController.Data == null)
                 return;
+            
+            bool cloudIsNewer = data.lastUpdatedTicks > _profileController.Data.lastUpdatedTicks;
 
             _profileController.Data.playerName = data.userName;
-            _profileController.Data.gold = data.totalCoins;
-            _profileController.Data.currentLevelIndex = data.crrLevel;
-            _profileController.Data.highestLevelUnlocked = data.highScore;
 
-            if (data.ownedCards != null)
-                _profileController.Data.ownedCards = new List<string>(data.ownedCards);
-
-            if (data.equippedDeck != null)
-                _profileController.Data.equippedDeck = new List<string>(data.equippedDeck);
-
-            if (data.unlockedAvatar != null)
-                _profileController.Data.unlockedAvatars = new List<int>(data.unlockedAvatar);
-
-            if (data.purchasedAvatar != null)
-                _profileController.Data.purchasedAvatars = new List<int>(data.purchasedAvatar);
-
-            if (data.bestScores != null)
-                _profileController.Data.BestScores = new Dictionary<string, int>(data.bestScores);
-
-            _profileController.Data.musicOn = data.musicOn;
-            _profileController.Data.sfxOn = data.sfxOn;
-            _profileController.Data.vfxOn = data.vfxOn;
-            _profileController.Data.language = data.language;
-            _profileController.Data.firebaseUserId = userId;
-            _profileController.SetFirebaseUserId(userId);
-
-            if (_profileController.Data.daily != null)
+            if (cloudIsNewer)
             {
-                _profileController.Data.daily.dayKey = data.dailyDayKey ?? "";
-                if (_profileController.Data.daily.login != null)
-                    _profileController.Data.daily.login.lastClaimDayKey = data.lastLoginDayKey ?? "";
+                _profileController.Data.gold = data.totalCoins;
+                _profileController.Data.currentLevelIndex = data.crrLevel;
+                _profileController.Data.highestLevelUnlocked = data.highScore;
+
+                if (data.ownedCards != null)
+                    _profileController.Data.ownedCards = new List<string>(data.ownedCards);
+
+                if (data.equippedDeck != null)
+                    _profileController.Data.equippedDeck = new List<string>(data.equippedDeck);
+
+                if (data.unlockedAvatar != null)
+                    _profileController.Data.unlockedAvatars = new List<int>(data.unlockedAvatar);
+
+                if (data.purchasedAvatar != null)
+                    _profileController.Data.purchasedAvatars = new List<int>(data.purchasedAvatar);
+
+                if (data.bestScores != null)
+                    _profileController.Data.BestScores = new Dictionary<string, int>(data.bestScores);
+
+                _profileController.Data.musicOn = data.musicOn;
+                _profileController.Data.sfxOn = data.sfxOn;
+                _profileController.Data.vfxOn = data.vfxOn;
+                _profileController.Data.language = data.language;
+
+                if (_profileController.Data.daily != null)
+                {
+                    _profileController.Data.daily.dayKey = data.dailyDayKey ?? "";
+                    if (_profileController.Data.daily.login != null)
+                        _profileController.Data.daily.login.lastClaimDayKey = data.lastLoginDayKey ?? "";
+                }
             }
 
+            _profileController.Data.firebaseUserId = userId;
+            _profileController.SetFirebaseUserId(userId);
             _profileController.SaveProfile();
         }
 

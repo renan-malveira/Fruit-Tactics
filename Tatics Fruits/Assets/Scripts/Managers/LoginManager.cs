@@ -183,42 +183,49 @@ namespace Managers
                 if (profileController == null || profileController.Data == null)
                     return;
                 
+                bool cloudIsNewer = cloud.lastUpdatedTicks > profileController.Data.lastUpdatedTicks;
+
                 profileController.Data.playerName = string.IsNullOrEmpty(displayName) || displayName == "Guest"
                     ? cloud.userName
                     : displayName;
 
-                profileController.Data.gold = cloud.totalCoins;
-                profileController.Data.currentLevelIndex = cloud.crrLevel;
-                profileController.Data.highestLevelUnlocked = cloud.highScore;
+                if (cloudIsNewer)
+                {
+                    profileController.Data.gold = cloud.totalCoins;
+                    profileController.Data.currentLevelIndex = cloud.crrLevel;
+                    profileController.Data.highestLevelUnlocked = cloud.highScore;
 
-                if (cloud.ownedCards != null) profileController.Data.ownedCards = new List<string>(cloud.ownedCards);
-                if (cloud.equippedDeck != null) profileController.Data.equippedDeck = new List<string>(cloud.equippedDeck);
-                if (cloud.unlockedAvatar != null) profileController.Data.unlockedAvatars = new List<int>(cloud.unlockedAvatar);
-                if (cloud.purchasedAvatar != null) profileController.Data.purchasedAvatars = new List<int>(cloud.purchasedAvatar);
-                if (cloud.BestScores != null) profileController.Data.BestScores = new Dictionary<string, int>(cloud.BestScores);
+                    if (cloud.ownedCards != null) profileController.Data.ownedCards = new List<string>(cloud.ownedCards);
+                    if (cloud.equippedDeck != null) profileController.Data.equippedDeck = new List<string>(cloud.equippedDeck);
+                    if (cloud.unlockedAvatar != null) profileController.Data.unlockedAvatars = new List<int>(cloud.unlockedAvatar);
+                    if (cloud.purchasedAvatar != null) profileController.Data.purchasedAvatars = new List<int>(cloud.purchasedAvatar);
+                    if (cloud.BestScores != null) profileController.Data.BestScores = new Dictionary<string, int>(cloud.BestScores);
 
-                profileController.Data.musicOn = cloud.musicOn;
-                profileController.Data.sfxOn = cloud.sfxOn;
-                profileController.Data.vfxOn = cloud.vfxOn;
-                profileController.Data.language = cloud.language;
+                    profileController.Data.musicOn = cloud.musicOn;
+                    profileController.Data.sfxOn = cloud.sfxOn;
+                    profileController.Data.vfxOn = cloud.vfxOn;
+                    profileController.Data.language = cloud.language;
+
+                    if (profileController.Data.daily != null)
+                    {
+                        profileController.Data.daily.dayKey = cloud.dailyDayKey ?? "";
+                        if (profileController.Data.daily.login != null)
+                            profileController.Data.daily.login.lastClaimDayKey = cloud.lastLoginDayKey ?? "";
+                    }
+                }
+
                 profileController.Data.firebaseUserId = uid;
 
                 if (dataSaver?.dataToSave != null)
                 {
-                    dataSaver.dataToSave.totalCoins = cloud.totalCoins;
+                    dataSaver.dataToSave.totalCoins = profileController.Data.gold;
+                    dataSaver.dataToSave.lastUpdatedTicks = profileController.Data.lastUpdatedTicks;
                     dataSaver.SaveLocal();
-                }
-
-                if (profileController.Data.daily != null)
-                {
-                    profileController.Data.daily.dayKey = cloud.dailyDayKey ?? "";
-                    if (profileController.Data.daily.login != null)
-                        profileController.Data.daily.login.lastClaimDayKey = cloud.lastLoginDayKey ?? "";
                 }
 
                 profileController.SaveProfile();
                 profileController.SetFirebaseUserId(uid);
-                
+
                 dataSaver.OnDataLoaded -= HandleDataLoaded;
                 dataSaver.OnLoadFailed -= HandleLoadFailed;
                 dataSaver.OnDataNotFound -= HandleDataNotFound;
