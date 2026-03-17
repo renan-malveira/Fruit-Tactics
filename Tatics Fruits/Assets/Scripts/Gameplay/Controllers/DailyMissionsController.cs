@@ -17,6 +17,10 @@ namespace Gameplay.Controllers
         [SerializeField] private bool useLocalTime = true;
         [SerializeField] private DailyLoginConfigSo loginConfig;
 
+        public static DailyMissionsController Instance { get; private set; }
+        
+        private bool ProfileAlive => profile != null;
+
         public event Action<bool> OnAttentionChanged;
         public event Action OnDailyLoginChanged;
         public event Action OnDailyMissionsChanged;
@@ -32,6 +36,18 @@ namespace Gameplay.Controllers
             public int Reward;
             public bool Claimed;
             public bool Claimable;
+        }
+
+        private void Awake()
+        {
+            if (Instance != null && Instance != this)
+            {
+                Destroy(gameObject);
+                return;
+            }
+
+            Instance = this;
+            DontDestroyOnLoad(gameObject);
         }
 
         private void Start()
@@ -52,6 +68,7 @@ namespace Gameplay.Controllers
 
         private void EnsureLoginInitialized()
         {
+            if (!ProfileAlive) return;
             if (profile.Data == null) return;
             if (profile.Data.daily == null)
                 profile.Data.daily = new DailySystemData();
@@ -75,6 +92,7 @@ namespace Gameplay.Controllers
 
         private void MigrateLegacyLoginIfNeeded()
         {
+            if (!ProfileAlive) return;
             var daily = profile.Data.daily;
             if (daily == null) return;
 
@@ -90,6 +108,7 @@ namespace Gameplay.Controllers
 
         private void HandleStreakBreakIfNeeded()
         {
+            if (!ProfileAlive) return;
             if (loginConfig == null || !loginConfig.ResetStreakOnMiss) return;
 
             var l = profile.Data.daily.login;
@@ -113,6 +132,7 @@ namespace Gameplay.Controllers
 
         public void EnsureDayGenerated()
         {
+            if (!ProfileAlive) return;
             var daily = profile.Data.daily;
             if (daily == null)
             {
@@ -156,6 +176,7 @@ namespace Gameplay.Controllers
 
         public List<DailyLoginDayInfo> GetLoginDays()
         {
+            if (!ProfileAlive) return new List<DailyLoginDayInfo>();
             EnsureLoginInitialized();
             var l = profile.Data.daily.login;
             var list = new List<DailyLoginDayInfo>(l.rewards.Count);
@@ -175,6 +196,7 @@ namespace Gameplay.Controllers
 
         public bool TryClaimDailyLoginDay(int index)
         {
+            if (!ProfileAlive) return false;
             EnsureLoginInitialized();
             var l = profile.Data.daily.login;
 
@@ -205,6 +227,7 @@ namespace Gameplay.Controllers
 
         public bool IsDailyLoginAvailable()
         {
+            if (!ProfileAlive) return false;
             EnsureLoginInitialized();
             var l = profile.Data.daily.login;
             return l.lastClaimDayKey != TodayKey && !l.claimed[l.cycleIndex];
@@ -212,6 +235,7 @@ namespace Gameplay.Controllers
 
         public bool TryClaimDailyLogin()
         {
+            if (!ProfileAlive) return false;
             EnsureLoginInitialized();
             var l = profile.Data.daily.login;
             return TryClaimDailyLoginDay(l.cycleIndex);
@@ -220,10 +244,15 @@ namespace Gameplay.Controllers
         DailyMissionSo FindDef(string missionId) =>
             missionPool.FirstOrDefault(m => m && m.id == missionId);
 
-        public IReadOnlyList<DailyMissionState> GetMissions() => profile.Data.daily.missions;
+        public IReadOnlyList<DailyMissionState> GetMissions()
+        {
+            if (!ProfileAlive) return Array.Empty<DailyMissionState>();
+            return profile.Data?.daily?.missions ?? (IReadOnlyList<DailyMissionState>)Array.Empty<DailyMissionState>();
+        }
 
         public bool TryClaimMission(string missionId)
         {
+            if (!ProfileAlive) return false;
             var st = profile.Data.daily.missions.FirstOrDefault(m => m.missionId == missionId);
             if (st == null || !st.completed || st.claimed) return false;
 
@@ -248,6 +277,7 @@ namespace Gameplay.Controllers
 
         public void ReportScore(int totalScore)
         {
+            if (!ProfileAlive) return;
             var list = profile.Data.daily.missions;
             if (list == null)
                 return;
@@ -273,6 +303,7 @@ namespace Gameplay.Controllers
         
         public void ReportComboReached(int comboCount)
         {
+            if (!ProfileAlive) return;
             var list = profile.Data.daily.missions;
             if (list == null) return;
 
@@ -305,7 +336,9 @@ namespace Gameplay.Controllers
 
         private void ReportSingleIncrement(MissionEventType type)
         {
-            var list = profile.Data.daily.missions;
+            if (profile == null) return;
+
+            var list = profile.Data?.daily?.missions;
             if (list == null) return;
 
             var changed = false;
@@ -326,6 +359,7 @@ namespace Gameplay.Controllers
 
         private void Flush()
         {
+            if (!ProfileAlive) return;
             profile.SaveProfile();
             OnDailyMissionsChanged?.Invoke();
             FireAttention();
@@ -333,7 +367,8 @@ namespace Gameplay.Controllers
 
         public void ReportWinLevel(int level)
         {
-            var list = profile.Data.daily.missions;
+            if (!ProfileAlive) return;
+            var list = profile.Data?.daily?.missions;
             if (list == null) return;
 
             var changed = false;
@@ -355,12 +390,14 @@ namespace Gameplay.Controllers
 
         public bool HasAnyClaimAvailable()
         {
-            bool anyMission = profile.Data.daily.missions.Any(m => m.completed && !m.claimed);
+            if (!ProfileAlive) return false;
+            bool anyMission = profile.Data?.daily?.missions?.Any(m => m.completed && !m.claimed) ?? false;
             return anyMission || IsDailyLoginAvailable();
         }
 
         public bool HasMissionClaimAvailable()
         {
+            if (!ProfileAlive) return false;
             var list = profile.Data?.daily?.missions;
             return list != null && list.Any(m => m.completed && !m.claimed);
         }

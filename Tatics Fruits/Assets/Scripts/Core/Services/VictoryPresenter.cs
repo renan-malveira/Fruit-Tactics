@@ -67,8 +67,6 @@ namespace Core.Services
                 canGoNext = canNext,
                 levelIndex = _progress.CurrentIndex
             });
-            
-            InterstitialAdManager.Instance?.OnMatchCompleted();
         }
         
         public void ClickNext() => OnNext?.Invoke();

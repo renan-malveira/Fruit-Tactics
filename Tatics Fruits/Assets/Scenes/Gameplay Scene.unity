@@ -6645,6 +6645,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1419642187}
   - component: {fileID: 1419642189}
+  - component: {fileID: 1419642192}
   m_Layer: 0
   m_Name: GameController
   m_TagString: Untagged
@@ -6661,7 +6662,7 @@ Transform:
   m_GameObject: {fileID: 1419642186}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -1.0101715, y: -1.4927024, z: 90.65037}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -6694,9 +6695,22 @@ MonoBehaviour:
   countdownView: {fileID: 241955251}
   allLevelsCompletedView: {fileID: 8590934228772649784, guid: db5f22bac4e24224ca9a8f951dcf469b, type: 3}
   comboTierConfig: {fileID: 11400000, guid: c3fe894c83ab7bf4aa35c5f3d4aaf8fc, type: 2}
-  pairMatchFeedback: {fileID: 0}
-  dailyMissions: {fileID: 0}
-  dataSaver: {fileID: 0}
+  pairMatchFeedback: {fileID: 1419642192}
+--- !u!114 &1419642192
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1419642186}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 379063348d044b0aaca90752fb95bfdb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Core.Services.PairMatchFeedback
+  successFeedback: {fileID: 1591998854}
+  comboFeedback: {fileID: 1591998854}
+  comboThreshold: 3
 --- !u!1001 &1448547642
 PrefabInstance:
   m_ObjectHideFlags: 0

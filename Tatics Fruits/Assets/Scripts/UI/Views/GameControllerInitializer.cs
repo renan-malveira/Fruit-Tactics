@@ -5,6 +5,7 @@ using Core.Services;
 using DefaultNamespace.New_GameplayCore;
 using Gameplay.Controllers;
 using Gameplay.GameState;
+using Managers;
 using New_GameplayCore;
 using New_GameplayCore.GameState;
 using New_GameplayCore.Services;
@@ -34,8 +35,6 @@ namespace UI.Views
         [SerializeField] private AllLevelsCompletedView allLevelsCompletedView;
         [SerializeField] private ComboTierConfigSo comboTierConfig;
         [SerializeField] private PairMatchFeedback pairMatchFeedback;
-        [SerializeField] private DailyMissionsController dailyMissions;
-        [SerializeField] private Managers.DataSaver dataSaver;
         
         private bool _hadInvalidPair;
         public IRuleEngine RuleEngine => _rule;
@@ -72,11 +71,7 @@ namespace UI.Views
             _profileService.Load();
 
             var currentIndex = _profileService.Data.currentLevelIndex;
-            
-            if (dataSaver?.dataToSave?.tutorialCompleted == true)
-                tutorialManager?.MarkCompletedFromRemote();
 
-            
             if (levelSet && levelSet.levels.Length > 0)
                 levelConfig = levelSet.levels[Mathf.Clamp(currentIndex, 0, levelSet.levels.Length - 1)];
             
@@ -107,7 +102,7 @@ namespace UI.Views
             
             if (pairMatchFeedback != null)
                 _controller.OnPairResolved += result => pairMatchFeedback.PlayMatchFeedback(result.ComboCountAfter);
-            
+
             IsReady = true;
             OnReady?.Invoke();
         }
@@ -123,8 +118,8 @@ namespace UI.Views
                 return;
             }
             
-            dailyMissions?.ReportSessionStarted();
-            
+            DailyMissionsController.Instance?.ReportSessionStarted();
+
             var levelIndexForTutorial = Progress.CurrentIndex + 1;
 
             var shown = tutorialManager.TryShowTutorial(levelIndexForTutorial);
@@ -182,14 +177,11 @@ namespace UI.Views
         
         private void HandlePairResolved(PairResult result)
         {
-            if (pairMatchFeedback != null)
-                pairMatchFeedback.PlayMatchFeedback(result.ComboCountAfter);
-
-            dailyMissions?.ReportPairMade();
-            dailyMissions?.ReportComboReached(result.ComboCountAfter);
+            DailyMissionsController.Instance?.ReportPairMade();
+            DailyMissionsController.Instance?.ReportComboReached(result.ComboCountAfter);
         }
-        
-        
+
+
         private void HandleLevelEnded(EndCause cause)
         {
             var totalScore = _score.Total;
@@ -235,18 +227,14 @@ namespace UI.Views
 
             var rewardGold = levelConfig.GetGoldReward(model.starsEarned);
             model.goldEarned = rewardGold;
-            _profileService.AddGold(rewardGold);
             
-            if (dataSaver != null && dataSaver.dataToSave != null)
-            {
-                dataSaver.AddCoins(rewardGold);
-                dataSaver.SaveData(force: true);
-            }
+            _profileService.AddGold(rewardGold);
 
             Progress.MarkNextUnlockedIfEligible(levelConfig, _score.Total, 0.75f);
-            dailyMissions?.ReportWinLevel(Progress.CurrentIndex + 1);
-            dailyMissions?.ReportScore(_score.Total);
-            dailyMissions?.ReportWinWithoutMistakes(!_hadInvalidPair);
+            
+            DailyMissionsController.Instance?.ReportWinLevel(Progress.CurrentIndex + 1);
+            DailyMissionsController.Instance?.ReportScore(_score.Total);
+            DailyMissionsController.Instance?.ReportWinWithoutMistakes(!_hadInvalidPair);
             _hadInvalidPair = false;
 
             var view = Instantiate(victoryPrefab, uiRoot);

@@ -144,9 +144,16 @@ namespace Gameplay.Controllers
         {
             _time.TryPay(_time.TimeLeftSeconds);
             _time.Add(_cfg.initialTimeSeconds);
-            var buf = new List<CardInstance>();
+
+            // Return the pre-round hand back to the deck before clearing,
+            // so cards aren't permanently lost when the round begins.
+            var returned = new System.Collections.Generic.List<CardInstance>();
+            _hand.ClearTo(returned);
+            foreach (var c in returned)
+                _deck.Discard(c);
+
+            var buf = new System.Collections.Generic.List<CardInstance>();
             _deck.DrawMany(_cfg.handSize, buf);
-            _hand.ClearTo(new List<CardInstance>());
             _hand.AddMany(buf);
             _combo.Reset();
             OnExitPreRound?.Invoke();
