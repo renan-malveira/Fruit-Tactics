@@ -17,7 +17,7 @@ namespace Editor
 
             if (CheckTestAdIds())
             {
-                Debug.LogError("❌ TEST AD IDS DETECTED! Replace test ad unit IDs in AdMobInterstitialProvider.cs with production IDs before release.");
+                Debug.LogError("❌ TEST AD IDS DETECTED! Replace test ad unit IDs in Core/StoreConfig.cs with production IDs before release.");
                 isReady = false;
                 issueCount++;
             }
@@ -69,9 +69,9 @@ namespace Editor
                 Debug.Log($"✅ Bundle ID: {bundleId}");
             }
 
-            if (PlayerSettings.Android.minSdkVersion < AndroidSdkVersions.AndroidApiLevel24)
+            if (PlayerSettings.Android.minSdkVersion < AndroidSdkVersions.AndroidApiLevel25)
             {
-                Debug.LogWarning($"⚠️ Min SDK version is {PlayerSettings.Android.minSdkVersion}. Consider Android 7.0 (API 24) or higher for Google Play");
+                Debug.LogWarning($"⚠️ Min SDK version is {PlayerSettings.Android.minSdkVersion}. Use Android 7.1 (API 25) or higher for Google Play");
             }
             else
             {
@@ -122,7 +122,10 @@ namespace Editor
 
         private static bool CheckTestAdIds()
         {
-            string[] guids = AssetDatabase.FindAssets("AdMobInterstitialProvider t:Script");
+            var guids = new System.Collections.Generic.List<string>();
+            guids.AddRange(AssetDatabase.FindAssets("StoreConfig t:Script"));
+            guids.AddRange(AssetDatabase.FindAssets("AdMobInterstitialProvider t:Script"));
+            guids.AddRange(AssetDatabase.FindAssets("AdMobBannerProvider t:Script"));
             foreach (string guid in guids)
             {
                 string path = AssetDatabase.GUIDToAssetPath(guid);

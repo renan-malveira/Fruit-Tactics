@@ -78,7 +78,7 @@
   "tutorial_3": "You can swap a single card from your hand...",
   "tutorial_4": "or all of them at once!",
   "tutorial_5": "But be careful! You lose time when performing these swaps.",
-  "tutorial_6": "The stage ends when you earn all three stars!",
+  "tutorial_6": "The stage ends when you reach the target score. Finish fast and without wrong pairs to earn all 3 stars!",
 
   "score": "Score",
   "high_score": "High Score",
@@ -91,7 +91,7 @@
   "swap_one_card": "Swap one card",
 
   "pre_round_play": "Ready?",
-  "pre_round_objective": "Score {0} points in {1} seconds to earn 3 stars!",
+  "pre_round_objective": "Score <b>{0}</b> points before time runs out! You start with <b>{1}</b> seconds.",
 
   "countdown_3": "READY",
   "countdown_2": "SET",
@@ -119,8 +119,20 @@
   "quit_gameplay": "Quit game?",
   "quit_gameplay_confirm": "When you quit, you will lose all current progress in this stage.",
 
-  "descriptionTerms_text": "1. Acceptance of the Terms\nBinding Agreement: These Terms constitute a legal agreement between you and Suricatus Games (\"We,\" \"Our,\" or \"the Company\") concerning your use of the Game.\n\nMinimum Age: You represent that you are at least 13 years of age. If you are a minor, you must review these Terms and the Privacy Policy with your parent or legal guardian to ensure they understand and agree to them.\n\n2. Personal Information Shared by the Player\nBy using the Game, you may choose to share certain personal information with us, including, but not limited to:\n\nProfile Data: Your username, nickname, profile picture (avatar), approximate location (if enabled), and other information you choose to include in your Game profile.\n\nCommunications: Chat messages, posts in forums, or in comment areas within the Game.\n\nSocial Media Connections: If you link your Game account to a third-party account (e.g., Facebook, Google), we may access and store information that you have allowed the third-party provider to share with us.\n\nUser-Generated Content (UGC): Any data, text, photos, graphics, or other information that you upload, post, or share in the Game.\n\n3. Use and Protection of Your Personal Information\nYour Consent: By sharing your personal information in the Game, you expressly agree to the collection, use, storage, and disclosure of your information by Us, as set forth in Our Privacy Policy.\n\nPurpose: We use your information to operate, improve, and personalize the Game, provide customer support, communication, and for security purposes.\n\nVisibility: Please note that information you share in your profile, public chats, or forums may become public and accessible to other Game users. You are solely responsible for the information you choose to make public.\n\n4. Player Conduct and User-Generated Content (UGC)\nUnacceptable Content: You agree not to post or share any User-Generated Content that is unlawful, defamatory, threatening, obscene, hateful, racially or ethnically offensive, or that infringes on the intellectual property rights of third parties.\n\nRight to Monitor: We reserve the right (but not the obligation) to monitor, filter, edit, block, or remove any UGC, at Our sole discretion and without prior notice.\n\nGrant of License: By submitting UGC, you grant the Company a worldwide, non-exclusive, perpetual, irrevocable, royalty-free, and fully sublicenseable license to use, reproduce, modify, adapt, publish, translate, create derivative works from, distribute, and display such UGC in connection with the operation of the Game.\n\n5. Your Account and Security\nAccount Responsibility: You are solely responsible for maintaining the confidentiality of your password and for all activities that occur under your account.\n\nCommunication: You agree to notify us immediately of any unauthorized use of your account or any other security breach.\n\n6. Intellectual Property Rights\nGame Ownership: All rights, title, and interest in and to the Game (including code, graphics, design, gameplay, and software) are the exclusive property of the Company.\n\nLimited License: The Company grants you a personal, non-exclusive, non-transferable, revocable, and limited license to install and use the Game on your personal device for your recreational and non-commercial use, subject to these Terms.\n\n7. Changes to the Terms\nThe Company may update or revise these Terms periodically. Changes will be effective upon posting in the Game or on Our website. Your continued use of the Game following such changes constitutes your acceptance of the new Terms.\n\n8. Contact\nIf you have any questions about these Terms, please contact us at:\n\nEmail: suricatusgames@gmail.com\n\nBy clicking \"Accept,\" \"Agree,\" or by using the Game, you confirm that you have read and agree to all the terms and conditions contained herein.",
+  "descriptionTerms_text": "Welcome to Fruit Tactics! Before you play, here is how the game works and what we do with your data.\n\n1. Who we are\nFruit Tactics is developed by Suricatus Games. Contact: suricatusgames@gmail.com.\n\n2. Minimum age\nThe game is intended for people aged 13 or older. If you are under 18, please read these terms with a parent or guardian.\n\n3. Your account and progress\nWe automatically create a guest account to save your progress in the cloud. On Android you can also sign in with Google Play Games. We store: an account identifier, the player name and avatar you choose, coins, levels, scores, missions, daily rewards and settings (sound and language).\n\n4. Leaderboard\nWhen the leaderboard is active, your player name and score may be shown to other players. You don't have to use your real name.\n\n5. Ads\nThe game is free and shows ads from Google AdMob. To do this, Google may use your device's advertising identifier, IP address and device information. In some countries we ask for your permission for personalized ads, and on iPhone the system asks whether the app may track your activity. You can decline and keep playing with non-personalized ads.\n\n6. Usage statistics\nWe use Unity Analytics and Firebase Analytics to understand how the game is played (levels started and completed, screens opened, crashes) and to balance the levels. This data does not include your real name.\n\n7. Notifications\nWith your permission, we send reminders such as daily reward alerts. You can turn them off in your device settings.\n\n8. What we don't collect\nWe don't collect location, contacts, photos, camera, microphone or payment data.\n\n9. Your rights\nYou can ask to access, correct or delete your data. To erase everything, use Settings > Delete account, or email suricatusgames@gmail.com.\n\n10. Using the game\nAll game content (code, art, sounds and design) belongs to Suricatus Games. You receive a personal, non-exclusive, revocable license to play on your devices. Cheating, modifying the game or exploiting bugs for an advantage is not allowed.\n\n11. Changes to these terms\nWe may update these terms and the Privacy Policy. The latest version is always available in Settings > Terms.\n\nBy tapping Accept, you confirm that you have read and agree to these terms and the Privacy Policy.",
   "terms_toggle": "Please accept our terms of use before proceeding.",
   "terms_title": "Terms",
-  "guest_button": "Login as a guest"
+  "guest_button": "Login as a guest",
+  "delete_account_in_progress": "Deleting your account...",
+  "delete_account_done": "Account deleted.",
+  "delete_account_offline": "No internet connection. Connect and try again.",
+  "delete_account_failed": "Could not delete right now. Please try again shortly.",
+  "privacy_policy": "Privacy Policy",
+  "privacy_options": "Privacy options",
+  "privacy_link_unavailable": "Policy unavailable right now. Email suricatusgames@gmail.com.",
+  "level_title": "Level {0}",
+  "profile_level": "Level {0}",
+  "pre_round_star_time": "Under {0}s",
+  "pre_round_star_time_left": "{0}s left",
+  "pre_round_star_perfect": "No mistakes"
 }

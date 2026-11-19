@@ -50,6 +50,9 @@ namespace New_GameplayCore.Views
             SceneManager.LoadScene(mainMenuSceneName);
         }
 
+        /// <summary>Mesmo efeito do botão Continuar (usado pelo botão Voltar do Android).</summary>
+        public void Continue() => ContinueGameplay();
+
         private void ContinueGameplay()
         {
             if (_timeManager != null)

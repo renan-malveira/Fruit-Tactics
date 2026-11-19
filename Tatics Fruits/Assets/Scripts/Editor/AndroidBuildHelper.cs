@@ -11,7 +11,7 @@ namespace Editor
         {
             Debug.Log("=== ANDROID RELEASE SETUP ===");
 
-            PlayerSettings.Android.minSdkVersion = AndroidSdkVersions.AndroidApiLevel24;
+            PlayerSettings.Android.minSdkVersion = AndroidSdkVersions.AndroidApiLevel25;
             Debug.Log("✅ Min SDK: Android 7.0 (API 24)");
 
             PlayerSettings.SetScriptingBackend(BuildTargetGroup.Android, ScriptingImplementation.IL2CPP);
@@ -29,8 +29,9 @@ namespace Editor
             PlayerSettings.SetManagedStrippingLevel(BuildTargetGroup.Android, ManagedStrippingLevel.High);
             Debug.Log("✅ Managed Stripping: High");
 
-            PlayerSettings.Android.useCustomKeystore = false;
-            Debug.LogWarning("⚠️ Custom Keystore: Not configured (YOU MUST SET THIS MANUALLY)");
+            // Não desligar o keystore: isso fazia o release sair assinado com a chave de debug.
+            if (!PlayerSettings.Android.useCustomKeystore)
+                Debug.LogWarning("⚠️ Custom Keystore: Not configured (YOU MUST SET THIS MANUALLY)");
 
             QualitySettings.vSyncCount = 0;
             Debug.Log("✅ VSync: Disabled (better for mobile)");

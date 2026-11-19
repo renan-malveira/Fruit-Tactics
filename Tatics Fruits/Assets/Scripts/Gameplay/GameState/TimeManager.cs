@@ -9,10 +9,26 @@ namespace New_GameplayCore.GameState
         private int _timeLeft;
         private float _acc;
         private bool _isPaused;
+        private float _elapsed;
         public event Action<int> OnTimeDelta;
         public int TimeLeftSeconds => _timeLeft;
+        public float ElapsedSeconds => _elapsed;
+        public bool IsPaused => _isPaused;
         public event Action<int> OnTimeChanged;
         public TimeManager(int startSeconds) => _timeLeft = startSeconds;
+
+        /// <summary>
+        /// Recomeça o relógio da partida sem disparar os avisos de +/- tempo
+        /// (antes o início da rodada mostrava "-120" e "+120" na tela).
+        /// </summary>
+        public void Reset(int seconds)
+        {
+            _timeLeft = Math.Max(0, seconds);
+            _acc = 0f;
+            _elapsed = 0f;
+            _isPaused = false;
+            OnTimeChanged?.Invoke(_timeLeft);
+        }
 
         public void Add(int seconds)
         {
@@ -37,6 +53,7 @@ namespace New_GameplayCore.GameState
         {
             if (_timeLeft <= 0 || _isPaused) return;
 
+            _elapsed += deltaTime;
             _acc += deltaTime;
             while (_acc >= 1f && _timeLeft > 0)
             {

@@ -88,7 +88,7 @@ namespace UI.Views
             menuButton.onClick.AddListener(() =>
             {
                 Managers.AnalyticsManager.Instance?.TrackButtonClicked("victory_menu");
-                SceneManager.LoadScene("MainMenu");
+                _presenter.ClickMenu();
             });
 
             Show();

@@ -8,6 +8,9 @@ namespace Core.Services
     public interface ITimeManager
     {
         int TimeLeftSeconds { get; }
+        /// <summary>Segundos de partida jogados (sem contar pausa). Usado na 2a estrela.</summary>
+        float ElapsedSeconds { get; }
+        bool IsPaused { get; }
         bool CanPay(int seconds);
         bool TryPay(int seconds);
         void Add(int seconds);
@@ -71,6 +74,8 @@ namespace Core.Services
     {
         bool TryMakePair(CardInstance A, CardInstance B, out PairResult result);
         bool IsValidPair(CardInstance A, CardInstance B);
+        void ReportInvalidPair();
+        int Mistakes { get; }
         event Action<PairResult> OnPairResolved;
         event Action OnInvalidPairAttempt;
     }

@@ -2,13 +2,15 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using Core.SaveSystem;
 using Firebase.Database;
+using Firebase.Extensions;
 using UnityEngine;
 
 namespace Managers
 {
     [Serializable]
-    public class DataToSave
+    public class DataToSave : ISerializationCallbackReceiver
     {
         public string userName;
         public int uniquePlayerId;
@@ -24,7 +26,14 @@ namespace Managers
         public List<string> equippedDeck = new List<string>();
         public List<int> unlockedAvatar = new List<int> { 0 };
         public List<int> purchasedAvatar = new List<int>();
-        public Dictionary<string, int> BestScores = new Dictionary<string, int>();
+        // Recorde e estrelas por fase. O JsonUtility não grava Dictionary: o conteúdo vai
+        // para as listas abaixo (mesmo formato do player_profile.json).
+        [NonSerialized] public Dictionary<string, int> BestScores = new Dictionary<string, int>();
+        [NonSerialized] public Dictionary<string, int> LevelStars = new Dictionary<string, int>();
+        public List<string> bestScoreKeys = new List<string>();
+        public List<int> bestScoreValues = new List<int>();
+        public List<string> levelStarKeys = new List<string>();
+        public List<int> levelStarValues = new List<int>();
 
         public bool musicOn = true;
         public bool sfxOn = true;
@@ -33,6 +42,22 @@ namespace Managers
         public string dailyDayKey;
         public string lastLoginDayKey;
         public bool tutorialCompleted;
+
+        public void OnBeforeSerialize()
+        {
+            bestScoreKeys ??= new List<string>();
+            bestScoreValues ??= new List<int>();
+            levelStarKeys ??= new List<string>();
+            levelStarValues ??= new List<int>();
+            IntMapSerializer.Write(BestScores, bestScoreKeys, bestScoreValues);
+            IntMapSerializer.Write(LevelStars, levelStarKeys, levelStarValues);
+        }
+
+        public void OnAfterDeserialize()
+        {
+            BestScores = IntMapSerializer.Read(bestScoreKeys, bestScoreValues);
+            LevelStars = IntMapSerializer.Read(levelStarKeys, levelStarValues);
+        }
     }
 
     public class DataSaver : MonoBehaviour
@@ -46,6 +71,15 @@ namespace Managers
         [SerializeField] private bool createCloudIfMissing = true;
 
         private DatabaseReference _databaseReference;
+
+        /// <summary>
+        /// Criado só no primeiro uso: no Awake o Firebase ainda pode não ter verificado
+        /// as dependências (CheckAndFixDependenciesAsync no LoginManager), o que derrubava o app.
+        /// </summary>
+        private DatabaseReference Db => _databaseReference ??= FirebaseDatabase.DefaultInstance.RootReference;
+
+        /// <summary>DataSaver da cena atual (a MainMenu cria um novo a cada visita).</summary>
+        public static DataSaver Current { get; private set; }
         private string _localFilePath;
         
         public bool IsDirty { get; private set; }
@@ -66,8 +100,14 @@ namespace Managers
 
         private void Awake()
         {
-            _databaseReference = FirebaseDatabase.DefaultInstance.RootReference;
+            Current = this;
             _localFilePath = Path.Combine(Application.persistentDataPath, "playerData.json");
+        }
+
+        private void OnDestroy()
+        {
+            if (Current == this)
+                Current = null;
         }
 
         public void SetUserId(string uid)
@@ -134,11 +174,11 @@ namespace Managers
             ApplyPatchLocally(patch);
             SaveLocal();
 
-            _databaseReference
+            Db
                 .Child("users")
                 .Child(userId)
                 .UpdateChildrenAsync(patch)
-                .ContinueWith(task =>
+                .ContinueWithOnMainThread(task =>
                 {
                     if (task.IsFaulted)
                         Debug.LogError($"[DataSaver] Erro ao salvar PATCH no Firebase: {task.Exception}");
@@ -182,7 +222,7 @@ namespace Managers
 
         private IEnumerator LoadDataCoroutine()
         {
-            var serverDataTask = _databaseReference.Child("users").Child(userId).GetValueAsync();
+            var serverDataTask = Db.Child("users").Child(userId).GetValueAsync();
             var localData = LoadLocal();
 
             yield return new WaitUntil(() => serverDataTask.IsCompleted);
@@ -245,11 +285,11 @@ namespace Managers
 
             var json = JsonUtility.ToJson(dataToSave);
 
-            _databaseReference
+            Db
                 .Child("users")
                 .Child(userId)
                 .SetRawJsonValueAsync(json)
-                .ContinueWith(task =>
+                .ContinueWithOnMainThread(task =>
                 {
                     if (task.IsFaulted)
                     {
@@ -320,7 +360,7 @@ namespace Managers
                 userName = "Guest",
                 uniquePlayerId = UnityEngine.Random.Range(100000, 999999),
                 totalCoins = 0,
-                crrLevel = 1,
+                crrLevel = 0,
                 highScore = 0,
                 removeAds = false,
                 isVip = false,
@@ -418,9 +458,22 @@ namespace Managers
             if (!enableRealtimeSync || _isListening || !ValidateUserId())
                 return;
 
-            var userRef = _databaseReference.Child("users").Child(userId);
+            var userRef = Db.Child("users").Child(userId);
             userRef.ValueChanged += OnFirebaseValueChanged;
             _isListening = true;
+        }
+
+        /// <summary>
+        /// Exclusão de conta: para o listener, esquece o usuário e zera os dados em memória,
+        /// para que nenhum autosave regrave o perfil antigo (local ou nuvem).
+        /// </summary>
+        public void ResetForAccountDeletion()
+        {
+            StopRealtimeListener();
+            userId = string.Empty;
+            dataToSave = new DataToSave();
+            IsDirty = false;
+            _isLocalChange = false;
         }
 
         public void StopRealtimeListener()
@@ -428,7 +481,7 @@ namespace Managers
             if (!_isListening || !ValidateUserId())
                 return;
             
-            var userRef = _databaseReference.Child("users").Child(userId);
+            var userRef = Db.Child("users").Child(userId);
             userRef.ValueChanged -= OnFirebaseValueChanged;
             _isListening = false;
         }
@@ -559,7 +612,7 @@ namespace Managers
         {
             Debug.Log("[DataSaver] 🔄 Force loading ONLY from Firebase (ignoring local data)...");
 
-            var serverDataTask = _databaseReference.Child("users").Child(userId).GetValueAsync();
+            var serverDataTask = Db.Child("users").Child(userId).GetValueAsync();
             yield return new WaitUntil(() => serverDataTask.IsCompleted);
 
             if (serverDataTask.IsFaulted)

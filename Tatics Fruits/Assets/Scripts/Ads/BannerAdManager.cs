@@ -15,6 +15,7 @@ namespace Ads
 
         private IBannerAdProvider _bannerProvider;
         private bool _isCurrentSceneAllowed;
+        private AdGatingService _gating;
 
         public static BannerAdManager Instance { get; private set; }
 
@@ -34,6 +35,7 @@ namespace Ads
 
         private void Start()
         {
+            HookGating();
             CheckCurrentScene();
             
             if (enableBanners && showBannerOnStart && _bannerProvider != null && _isCurrentSceneAllowed)
@@ -45,6 +47,7 @@ namespace Ads
         private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         {
             Debug.Log($"[BannerAdManager] OnSceneLoaded: {scene.name}");
+            HookGating();
             CheckCurrentScene();
             
             if (_bannerProvider == null)
@@ -116,6 +119,14 @@ namespace Ads
                 return;
             }
 
+            // VIP ou "remover anúncios": sem banner (antes o banner aparecia mesmo assim).
+            if (!AdsAllowed())
+            {
+                Debug.Log("[BannerAdManager] Ads disabled for this player (VIP/remove ads)");
+                _bannerProvider.HideBanner();
+                return;
+            }
+
             Debug.Log("[BannerAdManager] Showing banner ad");
             _bannerProvider.LoadAndShowBanner();
         }
@@ -159,9 +170,42 @@ namespace Ads
             }
         }
 
+        private static bool AdsAllowed()
+        {
+            var gating = AdGatingService.Instance;
+            return gating == null || gating.ShouldShowAds();
+        }
+
+        private void HookGating()
+        {
+            var gating = AdGatingService.Instance;
+            if (gating == _gating) return;
+
+            if (_gating != null)
+                _gating.OnAdStatusChanged -= HandleAdStatusChanged;
+
+            _gating = gating;
+
+            if (_gating != null)
+                _gating.OnAdStatusChanged += HandleAdStatusChanged;
+        }
+
+        private void HandleAdStatusChanged()
+        {
+            if (_bannerProvider == null) return;
+
+            if (!AdsAllowed())
+                _bannerProvider.HideBanner();
+            else if (enableBanners && _isCurrentSceneAllowed)
+                ShowBanner();
+        }
+
         private void OnDestroy()
         {
             SceneManager.sceneLoaded -= OnSceneLoaded;
+
+            if (_gating != null)
+                _gating.OnAdStatusChanged -= HandleAdStatusChanged;
             
             if (_bannerProvider != null)
             {

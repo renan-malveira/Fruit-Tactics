@@ -15,7 +15,7 @@ namespace Gameplay.Utils
             {
                 if (_instance == null)
                 {
-                    _instance = FindObjectOfType<Localizer>();
+                    _instance = FindFirstObjectByType<Localizer>();
                 
                     if (_instance == null)
                     {
@@ -58,11 +58,44 @@ namespace Gameplay.Utils
             Initialize();
         }
 
+        public static readonly string[] SupportedLanguages = { "pt-BR", "en-US", "es-ES" };
+        private const string FallbackLanguage = "pt-BR";
+        private const float AndroidLoadTimeoutSeconds = 3f;
+
         private void Initialize()
         {
             var cfg = SettingsRepository.Get();
-            SetLanguage(cfg.language, save: false);
+            var language = cfg.language;
+
+            // Primeira abertura (sem settings.json): usa o idioma do aparelho e grava a escolha.
+            // Quem já jogou mantém o idioma salvo.
+            if (!SettingsRepository.LoadedFromDisk)
+            {
+                language = DetectDeviceLanguage();
+                cfg.language = language;
+                SettingsRepository.Save(cfg);
+            }
+
+            SetLanguage(NormalizeLanguage(language), save: false);
             _isInitialized = true;
+        }
+
+        public static string DetectDeviceLanguage()
+        {
+            switch (Application.systemLanguage)
+            {
+                case SystemLanguage.Portuguese: return "pt-BR";
+                case SystemLanguage.Spanish: return "es-ES";
+                default: return "en-US";
+            }
+        }
+
+        private static string NormalizeLanguage(string language)
+        {
+            foreach (var supported in SupportedLanguages)
+                if (string.Equals(supported, language, StringComparison.OrdinalIgnoreCase))
+                    return supported;
+            return FallbackLanguage;
         }
 
         public void SetLanguage(string language, bool save = true)
@@ -92,7 +125,7 @@ namespace Gameplay.Utils
             {
                 return string.Format(fmt, args);
             }
-            catch (Exception e)
+            catch (FormatException)
             {
                 return fmt;
             }
@@ -105,14 +138,29 @@ namespace Gameplay.Utils
             string path = Path.Combine(Application.streamingAssetsPath, "i18n", $"{language}.json");
         
 #if UNITY_ANDROID && !UNITY_EDITOR
-        var www = new UnityEngine.WWW(path);
-        while (!www.isDone) { }
-        if(!string.IsNullOrEmpty(www.error))
-        {
-            Debug.LogError(www.error);
-            return;
-        }
-        var json = www.text;
+            // No Android o StreamingAssets fica dentro do APK (jar:), então File não lê.
+            // O arquivo é pequeno e local; a espera tem limite para nunca travar o jogo.
+            string json;
+            using (var request = UnityEngine.Networking.UnityWebRequest.Get(path))
+            {
+                request.SendWebRequest();
+                var deadline = DateTime.UtcNow.AddSeconds(AndroidLoadTimeoutSeconds);
+                while (!request.isDone && DateTime.UtcNow < deadline)
+                    System.Threading.Thread.Sleep(1);
+
+                if (!request.isDone)
+                {
+                    request.Abort();
+                    Debug.LogError($"[Localizer] Tempo esgotado ao ler {path}");
+                    return;
+                }
+                if (request.result != UnityEngine.Networking.UnityWebRequest.Result.Success)
+                {
+                    Debug.LogError($"[Localizer] {request.error} ({path})");
+                    return;
+                }
+                json = request.downloadHandler.text;
+            }
 #else
             if (!File.Exists(path))
             {

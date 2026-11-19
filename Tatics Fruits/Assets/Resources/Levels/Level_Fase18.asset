@@ -15,7 +15,7 @@ MonoBehaviour:
   levelId: fase_18
   displayName: Fase 18
   description: "Fa\xE7a {0} pontos em {0} segundos!"
-  targetScore: 150
+  targetScore: 1060
   initialTimeSeconds: 90
   handSize: 6
   deckSize: 60
@@ -28,12 +28,13 @@ MonoBehaviour:
   fixedSeed: 0
   scorePerPairBase: 0
   scorePerCardValueFactor: 0
-  comboWindows: 5000
+  comboWindows: 4800
   comboMultipliers:
   - 0
   - 0
   - 0
   - 0
+  parTimeSeconds: 65
   star1Threshold: 0.25
   star2Threshold: 0.5
   star3Threshold: 1

@@ -5,6 +5,7 @@ using Core.Services;
 using DefaultNamespace.New_GameplayCore;
 using Gameplay.Controllers;
 using Gameplay.GameState;
+using Gameplay.Utils;
 using Managers;
 using New_GameplayCore;
 using New_GameplayCore.GameState;
@@ -35,8 +36,7 @@ namespace UI.Views
         [SerializeField] private AllLevelsCompletedView allLevelsCompletedView;
         [SerializeField] private ComboTierConfigSo comboTierConfig;
         [SerializeField] private PairMatchFeedback pairMatchFeedback;
-        
-        private bool _hadInvalidPair;
+
         public IRuleEngine RuleEngine => _rule;
         public IGameController Controller => _controller;
         public bool IsReady { get; private set; }
@@ -49,7 +49,8 @@ namespace UI.Views
         public IScoreService Score => _score;
         public LevelProgressService Progress;
         public PlayerProfileService Profile => _profileService;
-        
+        public GameplaySettings PauseMenu => gameplaySettings;
+
         private GameStateMachine _fsm;
         private TimeManager _time;
         private ScoreService _score;
@@ -61,29 +62,28 @@ namespace UI.Views
         private IGameController _controller;
         private PreRoundPresenter _preRoundPresenter;
         private PreRoundView _preRoundInstance;
+        private bool _leavingScene;
+
+        private int LevelNumber => Progress != null ? Progress.CurrentIndex + 1 : 1;
 
         private void Awake()
         {
-            Progress = new LevelProgressService();
-            Progress.Load();
-            
             _profileService = new PlayerProfileService();
             _profileService.Load();
 
-            var currentIndex = _profileService.Data.currentLevelIndex;
+            // O progresso das fases mora no perfil (que vai para a nuvem).
+            Progress = new LevelProgressService(_profileService);
+            Progress.Load();
 
-            if (levelSet && levelSet.levels.Length > 0)
-                levelConfig = levelSet.levels[Mathf.Clamp(currentIndex, 0, levelSet.levels.Length - 1)];
-            
             var cfg = Progress.Current(levelSet);
             if (cfg != null)
                 levelConfig = cfg;
-            
+
             if (comboTierConfig == null)
             {
                 comboTierConfig = Resources.Load<ComboTierConfigSo>("DefaultComboTierConfig");
             }
-            
+
             _fsm   = new GameStateMachine();
             _time  = new TimeManager(levelConfig.initialTimeSeconds);
             _score = new ScoreService(levelConfig);
@@ -94,12 +94,11 @@ namespace UI.Views
             _rule  = new RuleEngine(_hand, _deck, _score, _time, _combo, levelConfig);
             _controller = new GameController(
                 _fsm, _time, _deck, _hand, _rule, _swap, _combo, levelConfig, _score);
-            
+
             _controller.OnEnterPreRound += HandleEnterPreRound;
             _controller.OnLevelEnded += HandleLevelEnded;
             _controller.OnPairResolved += HandlePairResolved;
-            _rule.OnInvalidPairAttempt += () => _hadInvalidPair = true;
-            
+
             if (pairMatchFeedback != null)
                 _controller.OnPairResolved += result => pairMatchFeedback.PlayMatchFeedback(result.ComboCountAfter);
 
@@ -111,13 +110,13 @@ namespace UI.Views
         {
             if (Progress == null)
                 return;
-            
+
             if (tutorialManager == null)
             {
                 StartGameplay();
                 return;
             }
-            
+
             DailyMissionsController.Instance?.ReportSessionStarted();
 
             var levelIndexForTutorial = Progress.CurrentIndex + 1;
@@ -137,7 +136,7 @@ namespace UI.Views
         private void StartGameplay()
         {
             if (phaseLabel)
-                phaseLabel.text = $"Fase {Progress.CurrentIndex + 1}";
+                phaseLabel.text = Localizer.Instance.TrFormat("level_title", "Fase {0}", LevelNumber);
 
             _controller.StartLevel(levelConfig, deckConfig);
             hudView.Initialize(_time, _score, _swap, _combo, levelConfig, comboTierConfig);
@@ -147,11 +146,8 @@ namespace UI.Views
             {
                 gameplaySettings.Initialize(_time);
             }
-            
-            Managers.AnalyticsManager.Instance?.TrackLevelStarted(
-                Progress.CurrentIndex + 1, 
-                levelConfig.name
-            );
+
+            Managers.AnalyticsManager.Instance?.TrackLevelStarted(LevelNumber, levelConfig.name);
         }
 
         private void HandleTutorialFinished()
@@ -174,20 +170,18 @@ namespace UI.Views
                 tutorialManager.OnTutorialFinished -= HandleTutorialFinished;
             }
         }
-        
+
         private void HandlePairResolved(PairResult result)
         {
             DailyMissionsController.Instance?.ReportPairMade();
             DailyMissionsController.Instance?.ReportComboReached(result.ComboCountAfter);
         }
 
-
         private void HandleLevelEnded(EndCause cause)
         {
-            var totalScore = _score.Total;
-            var levelId = levelConfig.levelId;
-            if (string.IsNullOrEmpty(levelId))
-                levelId = levelConfig.name;
+            // Conta a partida para o ritmo de anúncios; o anúncio em si só aparece
+            // quando o jogador sai da tela de resultado (Próxima, Jogar de novo ou Menu).
+            InterstitialAdManager.Instance?.RegisterMatchCompleted(LevelNumber);
 
             switch (cause)
             {
@@ -199,71 +193,62 @@ namespace UI.Views
                     ShowDefeat();
                     break;
             }
-            
-            InterstitialAdManager.Instance.OnMatchCompleted();
+
+            OnLevelEnd?.Invoke(cause);
         }
 
         private void ShowVictory()
         {
+            var levelIndex = Progress.CurrentIndex;
+            var levelNumber = levelIndex + 1;
+            var totalScore = _score.Total;
+            var mistakes = _rule.Mistakes;
+            var totalBestBefore = TotalBestScore();
+
             var presenter = new VictoryPresenter(
-                levelConfig, _score, _time, _profileService, Progress, levelSet);
+                levelConfig, _score, _time, _profileService, Progress, levelSet, mistakes);
 
             VictoryModel model = default;
             presenter.OnModelReady += m => model = m;
             presenter.Build();
 
-            var currentLevel = Progress.CurrentIndex;
-            var totalScore   = _score.Total;
-            var completed    = Progress.CanAdvance(levelConfig, totalScore, 0.75f);
-            _profileService.SetLevel(currentLevel, completed);
+            // Libera a próxima fase e já deixa ela como atual (Menu > Jogar continua dela).
+            Progress.CompleteLevel(levelIndex, levelSet);
 
-            var levelId      = GetLevelId();
-            var firebaseUid  = Firebase.Auth.FirebaseAuth.DefaultInstance?.CurrentUser?.UserId ?? string.Empty;
-            var playerName   = _profileService.Data?.playerName ?? string.Empty;
-            var previousBest = _profileService.GetBestScore(levelId);
-            var lbRepository = new Services.FirebaseLeaderboardRepository();
-            var lbPresenter  = new Services.LeaderboardPresenter(lbRepository);
-            lbPresenter.SubmitIfNewBest(firebaseUid, playerName, totalScore, previousBest);
+            SubmitLeaderboardIfImproved(totalBestBefore);
 
             var rewardGold = levelConfig.GetGoldReward(model.starsEarned);
             model.goldEarned = rewardGold;
-            
             _profileService.AddGold(rewardGold);
 
-            Progress.MarkNextUnlockedIfEligible(levelConfig, _score.Total, 0.75f);
-            
-            DailyMissionsController.Instance?.ReportWinLevel(Progress.CurrentIndex + 1);
-            DailyMissionsController.Instance?.ReportScore(_score.Total);
-            DailyMissionsController.Instance?.ReportWinWithoutMistakes(!_hadInvalidPair);
-            _hadInvalidPair = false;
+            DailyMissionsController.Instance?.ReportWinLevel(levelNumber);
+            DailyMissionsController.Instance?.ReportScore(totalScore);
+            DailyMissionsController.Instance?.ReportWinWithoutMistakes(mistakes == 0);
+
+            Managers.AnalyticsManager.Instance?.TrackLevelCompleted(
+                levelNumber, totalScore, model.starsEarned, _time.ElapsedSeconds, true);
 
             var view = Instantiate(victoryPrefab, uiRoot);
             view.Bind(presenter, model);
 
             presenter.OnReplay += () =>
             {
-                Progress.Replay();
-                SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+                Progress.SetCurrentIndex(levelIndex);
+                LeaveTo(SceneManager.GetActiveScene().buildIndex);
             };
             presenter.OnNext += () =>
             {
-                var currentIndex = Progress.CurrentIndex;
-                var totalLevels  = levelSet.levels.Length;
-
-                if (currentIndex >= totalLevels - 1)
+                if (levelIndex >= levelSet.levels.Length - 1)
                     ShowAllLevelsCompleted();
                 else
-                {
-                    Progress.Advance(levelSet);
-                    SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
-                }
+                    LeaveTo(SceneManager.GetActiveScene().buildIndex);
             };
+            presenter.OnMenu += () => LeaveTo("MainMenu");
         }
-
 
         private void ShowAllLevelsCompleted()
         {
-            var totalStars      = Progress.TotalStars(levelSet);
+            var totalStars       = Progress.TotalStars(levelSet);
             var maxStarsPossible = levelSet.levels.Length * 3;
 
             var model = new AllLevelsCompletedModel
@@ -282,19 +267,13 @@ namespace UI.Views
                 model,
                 onPlayAgain: () =>
                 {
+                    // Volta para a fase 1 mantendo estrelas, recordes e fases liberadas.
                     Progress.Reset();
-                    SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+                    LeaveTo(SceneManager.GetActiveScene().buildIndex);
                 },
-                onMenuClick: () =>
-                {
-                    SceneManager.LoadScene("MainMenu");
-                },
-                onLeaderboard: () =>
-                {
-                    SceneManager.LoadScene("MainMenu");
-                });
+                onMenuClick: () => LeaveTo("MainMenu"),
+                onLeaderboard: () => LeaveTo("MainMenu"));
         }
-
 
         private void ShowDefeat()
         {
@@ -303,8 +282,6 @@ namespace UI.Views
             DefeatModel model = default;
             presenter.OnModelReady += m => model = m;
             presenter.Build();
-            
-            Progress.MarkNextUnlockedIfEligible(levelConfig, _score.Total, 0.75f);
 
             var view = Instantiate(defeatPrefab, uiRoot);
             view.Bind(presenter, model);
@@ -312,20 +289,71 @@ namespace UI.Views
             presenter.OnReplay += () =>
             {
                 Progress.Replay();
-                SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+                LeaveTo(SceneManager.GetActiveScene().buildIndex);
             };
-            presenter.OnMenu += () =>
-            {
-                SceneManager.LoadScene("MainMenu");
-            };
-            
-            var timeSpent = levelConfig.initialTimeSeconds - _time.TimeLeftSeconds;
+            presenter.OnMenu += () => LeaveTo("MainMenu");
+
             Managers.AnalyticsManager.Instance?.TrackLevelFailed(
-                Progress.CurrentIndex + 1,
+                LevelNumber,
                 _score.Total,
-                timeSpent,
+                _time.ElapsedSeconds,
                 "time_up"
             );
+        }
+
+        /// <summary>Mostra o intersticial (se for a hora) e só depois troca de cena.</summary>
+        private void LeaveTo(int buildIndex) => LeaveTo(() => SceneManager.LoadScene(buildIndex));
+
+        private void LeaveTo(string sceneName) => LeaveTo(() => SceneManager.LoadScene(sceneName));
+
+        private void LeaveTo(Action load)
+        {
+            if (_leavingScene) return;
+            _leavingScene = true;
+
+            var ads = InterstitialAdManager.Instance;
+            if (ads != null)
+                ads.ShowIfDueThen(load);
+            else
+                load();
+        }
+
+        /// <summary>
+        /// O ranking usa a soma dos recordes de todas as fases (comparável entre jogadores).
+        /// Antes cada vitória enviava a pontuação da fase, e o "recorde anterior" era lido depois
+        /// de gravado, então nada chegava ao ranking.
+        /// </summary>
+        private void SubmitLeaderboardIfImproved(int totalBestBefore)
+        {
+            var totalBestAfter = TotalBestScore();
+            if (totalBestAfter <= totalBestBefore)
+                return;
+
+            var firebaseUid = Firebase.Auth.FirebaseAuth.DefaultInstance?.CurrentUser?.UserId;
+            if (string.IsNullOrEmpty(firebaseUid))
+                return;
+
+            try
+            {
+                var playerName  = _profileService.Data?.playerName ?? string.Empty;
+                var lbPresenter = new Services.LeaderboardPresenter(new Services.FirebaseLeaderboardRepository());
+                lbPresenter.SubmitIfNewBest(firebaseUid, playerName, totalBestAfter, totalBestBefore);
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning($"[GameControllerInitializer] Ranking não enviado: {e.Message}");
+            }
+        }
+
+        private int TotalBestScore()
+        {
+            if (levelSet?.levels == null) return 0;
+
+            var total = 0;
+            foreach (var level in levelSet.levels)
+                if (level != null)
+                    total += _profileService.GetBestScore(level.LevelKey);
+            return total;
         }
 
         private void HandleEnterPreRound()
@@ -337,6 +365,7 @@ namespace UI.Views
                 _profileService);
 
             var model = _preRoundPresenter.BuildModel(levelConfig, _deck, _profileService);
+            model.levelNumber = LevelNumber;
 
             _preRoundInstance = Instantiate(preRoundView, uiRoot);
             _preRoundInstance.Bind(_preRoundPresenter, model);
@@ -352,8 +381,5 @@ namespace UI.Views
                 _controller.UpdateTick(Time.deltaTime);
             }
         }
-    
-        private string GetLevelId()
-            => string.IsNullOrEmpty(levelConfig.levelId) ? levelConfig.name : levelConfig.levelId;
     }
 }

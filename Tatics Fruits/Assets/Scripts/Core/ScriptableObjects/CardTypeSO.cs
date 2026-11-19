@@ -46,6 +46,11 @@ namespace Core.ScriptableObjects
 
         public bool useFixedSeed;
         public int effectiveSeed;
+
+        // v2.2: número da fase (título) e critérios das estrelas
+        public int levelNumber;
+        public int parTimeSeconds;
+        public int bestStars;
     }
 
 }

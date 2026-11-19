@@ -17,6 +17,9 @@ namespace Core.Services
         public event Action<PairResult> OnPairResolved;
         public event Action OnInvalidPairAttempt;
 
+        /// <summary>Pares errados tentados nesta partida (conta para a 3a estrela e a missão "sem erros").</summary>
+        public int Mistakes { get; private set; }
+
         public RuleEngine(IHandService hand, IDeckService deck, IScoreService score, 
             ITimeManager time, IComboTracker combo, LevelConfigSo cfg)
         {
@@ -29,27 +32,29 @@ namespace Core.Services
         }
 
         public bool IsValidPair(CardInstance a, CardInstance b)
-            => a.Type.id == b.Type.id;
+            => a.Type != null && b.Type != null && a.RollId != b.RollId && a.Type.id == b.Type.id;
+
+        public void ReportInvalidPair()
+        {
+            Mistakes++;
+            OnInvalidPairAttempt?.Invoke();
+        }
 
         public bool TryMakePair(CardInstance a, CardInstance b, out PairResult result)
         {
             result = default;
             if (!IsValidPair(a, b))
             {
-                OnInvalidPairAttempt?.Invoke();
+                ReportInvalidPair();
                 return false;
             }
 
             _combo.RegisterPair();
 
-            var comboIndex = Mathf.Clamp(_combo.CurrentCombo - 1, 0, _cfg.comboMultipliers.Length - 1);
-            var multiplier = _cfg.comboMultipliers[comboIndex];
-            
+            // O multiplicador do combo vem do tier (ComboTierConfig). O campo antigo
+            // LevelConfigSo.comboMultipliers estava zerado em todas as fases e não é mais usado.
             var tier = _combo.CurrentTier;
-            if (tier != null)
-            {
-                multiplier *= tier.scoreMultiplier;
-            }
+            var multiplier = tier != null && tier.scoreMultiplier > 0f ? tier.scoreMultiplier : 1f;
 
             _score.AddPairScore(a, b, multiplier, out var added);
             

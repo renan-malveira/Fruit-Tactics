@@ -98,5 +98,39 @@ namespace Core.Services
             
             return _data.BestScores.TryGetValue(levelId, out int best) ? best : 0;
         }
+
+        public int GetLevelStars(string levelId)
+        {
+            if (string.IsNullOrEmpty(levelId) || _data?.LevelStars == null)
+                return 0;
+
+            return _data.LevelStars.TryGetValue(levelId, out var stars) ? stars : 0;
+        }
+
+        /// <summary>Guarda a melhor quantidade de estrelas da fase (nunca diminui). Não salva.</summary>
+        public bool RegisterLevelStars(string levelId, int stars)
+        {
+            if (string.IsNullOrEmpty(levelId))
+                return false;
+
+            stars = UnityEngine.Mathf.Clamp(stars, 0, 3);
+            var previous = GetLevelStars(levelId);
+            if (stars <= previous)
+                return false;
+
+            _data.LevelStars[levelId] = stars;
+            return true;
+        }
+
+        public int TotalStars(New_GameplayCore.LevelSetSO set)
+        {
+            if (set?.levels == null) return 0;
+
+            var total = 0;
+            foreach (var level in set.levels)
+                if (level != null)
+                    total += GetLevelStars(level.LevelKey);
+            return total;
+        }
     }
 }

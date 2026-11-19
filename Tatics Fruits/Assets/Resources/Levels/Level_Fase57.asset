@@ -15,7 +15,7 @@ MonoBehaviour:
   levelId: fase_57
   displayName: Fase 57
   description: 
-  targetScore: 1400
+  targetScore: 1380
   initialTimeSeconds: 55
   handSize: 8
   deckSize: 64
@@ -28,12 +28,13 @@ MonoBehaviour:
   fixedSeed: 0
   scorePerPairBase: 0
   scorePerCardValueFactor: 10
-  comboWindows: 2600
+  comboWindows: 4400
   comboMultipliers:
   - 1
   - 1.2
   - 1.5
   - 2
+  parTimeSeconds: 60
   star1Threshold: 0.33
   star2Threshold: 0.66
   star3Threshold: 1

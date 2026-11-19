@@ -15,7 +15,7 @@ MonoBehaviour:
   levelId: fase_76
   displayName: Fase 76
   description: 
-  targetScore: 2500
+  targetScore: 1530
   initialTimeSeconds: 42
   handSize: 9
   deckSize: 64
@@ -28,12 +28,13 @@ MonoBehaviour:
   fixedSeed: 0
   scorePerPairBase: 0
   scorePerCardValueFactor: 10
-  comboWindows: 1800
+  comboWindows: 4200
   comboMultipliers:
   - 1
   - 1.2
   - 1.5
   - 2
+  parTimeSeconds: 60
   star1Threshold: 0.33
   star2Threshold: 0.66
   star3Threshold: 1

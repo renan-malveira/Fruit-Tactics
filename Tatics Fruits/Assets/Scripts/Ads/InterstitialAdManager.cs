@@ -1,12 +1,24 @@
 using System;
+using System.Collections;
 using UnityEngine;
 
 namespace Ads
 {
+    /// <summary>
+    /// Ritmo do intersticial (v2.2):
+    /// - nada nas primeiras fases (antes da fase <see cref="FirstLevelWithAds"/>);
+    /// - no máximo um a cada <see cref="MatchesBetweenAds"/> partidas e
+    ///   <see cref="MinSecondsBetweenAds"/> segundos;
+    /// - só na transição (Próxima, Jogar de novo, Menu), nunca por cima da tela de resultado.
+    ///   A cena seguinte só carrega quando o anúncio fecha.
+    /// </summary>
     public class InterstitialAdManager : MonoBehaviour
     {
         private const int MatchesBetweenAds = 3;
         private const int TestModeMatches = 1;
+        private const int FirstLevelWithAds = 4;
+        private const float MinSecondsBetweenAds = 90f;
+        private const float ShowFailSafeSeconds = 60f;
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         [SerializeField] private bool testMode = false;
@@ -19,6 +31,9 @@ namespace Ads
         private IInterstitialAdProvider _adProvider;
         private bool _isShowingAd;
         private int _matchesSinceLastAd;
+        private float _lastAdRealtime = float.NegativeInfinity;
+        private Action _afterAd;
+        private Coroutine _failSafe;
 
         public static InterstitialAdManager Instance { get; private set; }
 
@@ -48,6 +63,9 @@ namespace Ads
         {
             if (adGatingService != null)
                 adGatingService.OnAdStatusChanged -= OnAdStatusChanged;
+
+            if (Instance == this)
+                Instance = null;
         }
 
         private void OnAdStatusChanged()
@@ -67,17 +85,38 @@ namespace Ads
                 adGatingService.OnAdStatusChanged += OnAdStatusChanged;
         }
 
-        public void OnMatchCompleted()
+        /// <summary>Fim de uma partida na fase <paramref name="levelNumber"/> (1 = primeira fase). Só conta.</summary>
+        public void RegisterMatchCompleted(int levelNumber)
         {
-            if (!ShouldShowAds() || _isShowingAd)
+            if (!ShouldShowAds() || levelNumber < FirstLevelWithAds)
                 return;
 
             _matchesSinceLastAd++;
+        }
 
-            int currentInterval = testMode ? TestModeMatches : MatchesBetweenAds;
+        /// <summary>Compatibilidade (AdGatingTestDriver): conta uma partida sem mostrar nada.</summary>
+        public void OnMatchCompleted() => RegisterMatchCompleted(FirstLevelWithAds);
 
-            if (_matchesSinceLastAd >= currentInterval)
-                ShowInterstitialAd();
+        /// <summary>
+        /// Mostra o intersticial se ele estiver na vez e chama <paramref name="continueWith"/>
+        /// quando ele fechar. Se não for a vez (ou não houver anúncio pronto), chama na hora.
+        /// </summary>
+        public void ShowIfDueThen(Action continueWith)
+        {
+            if (!IsAdDue() || !TryShow("transition", continueWith))
+                continueWith?.Invoke();
+        }
+
+        private bool IsAdDue()
+        {
+            if (!ShouldShowAds() || _isShowingAd)
+                return false;
+
+            var interval = testMode ? TestModeMatches : MatchesBetweenAds;
+            if (_matchesSinceLastAd < interval)
+                return false;
+
+            return testMode || Time.realtimeSinceStartup - _lastAdRealtime >= MinSecondsBetweenAds;
         }
 
         public void SetAdProvider(IInterstitialAdProvider provider)
@@ -86,47 +125,79 @@ namespace Ads
             LoadNextAd();
         }
 
+        /// <summary>Mostra agora, sem olhar o ritmo (painéis de debug).</summary>
         public void ShowInterstitialAd()
         {
             if (!ShouldShowAds() || _isShowingAd)
                 return;
 
+            TryShow("debug", null);
+        }
+
+        private bool TryShow(string placement, Action afterAd)
+        {
             if (_adProvider == null || !_adProvider.IsAdReady())
             {
                 LoadNextAd();
-                return;
+                return false;
             }
 
             _isShowingAd = true;
+            _afterAd = afterAd;
             Time.timeScale = 0f;
 
-            Managers.AnalyticsManager.Instance?.TrackAdStarted("interstitial", "auto");
+            Managers.AnalyticsManager.Instance?.TrackAdStarted("interstitial", placement);
+
+            if (_failSafe != null) StopCoroutine(_failSafe);
+            _failSafe = StartCoroutine(FailSafe());
 
             _adProvider.ShowAd(
                 onAdCompleted: OnAdCompleted,
                 onAdFailed: OnAdFailed
             );
+            return true;
         }
 
-        private void OnAdCompleted()
+        // Se o SDK não avisar que o anúncio fechou, o jogo não fica preso na tela de resultado.
+        private IEnumerator FailSafe()
         {
-            Managers.AnalyticsManager.Instance?.TrackAdCompleted("interstitial", true);
-            ResetAdTimer();
-            ResumeGame();
-            LoadNextAd();
+            yield return new WaitForSecondsRealtime(ShowFailSafeSeconds);
+            _failSafe = null;
+            if (_isShowingAd)
+                FinishAd(false);
         }
 
-        private void OnAdFailed()
+        private void OnAdCompleted() => FinishAd(true);
+
+        private void OnAdFailed() => FinishAd(false);
+
+        private void FinishAd(bool completed)
         {
-            Managers.AnalyticsManager.Instance?.TrackAdCompleted("interstitial", false);
+            if (!_isShowingAd)
+                return;
+
+            if (_failSafe != null)
+            {
+                StopCoroutine(_failSafe);
+                _failSafe = null;
+            }
+
+            Managers.AnalyticsManager.Instance?.TrackAdCompleted("interstitial", completed);
             ResetAdTimer();
+            if (completed)
+                _lastAdRealtime = Time.realtimeSinceStartup;
             ResumeGame();
             LoadNextAd();
+
+            var next = _afterAd;
+            _afterAd = null;
+            next?.Invoke();
         }
 
         private bool ShouldShowAds()
         {
-            return adGatingService == null || adGatingService.ShouldShowAds();
+            var gating = adGatingService != null ? adGatingService : AdGatingService.Instance;
+            return gating == null || gating.ShouldShowAds();
         }
 
         private void ResetAdTimer()

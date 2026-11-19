@@ -1,5 +1,4 @@
 using System;
-using Ads;
 using Core.ScriptableObjects;
 using New_GameplayCore;
 using UnityEngine;
@@ -28,7 +27,7 @@ namespace Core.Services
         public event Action<DefeatModel> OnModelReady;
         public event Action OnReplay;
         public event Action OnMenu;
-        
+
         public void ClickReplay() => OnReplay?.Invoke();
         public void ClickMenu() => OnMenu?.Invoke();
 
@@ -45,31 +44,28 @@ namespace Core.Services
 
         public void Build()
         {
-            var levelId = string.IsNullOrEmpty(_cfg.levelId) ? _cfg.name : _cfg.levelId;
+            var levelId = _cfg.LevelKey;
             var total = _score.Total;
             var previousBest = _profileService.GetBestScore(levelId);
-            
-            _profileService.RegisterBestScore(levelId, total);
-            var newRecord = total > previousBest;
 
-            var pct = Mathf.Clamp01(total / (float)_cfg.targetScore);
-            var stars = 0;
-            if (pct >= _cfg.star1Threshold) stars = 1;
-            if (pct >= _cfg.star2Threshold) stars = 2;
-            if (pct >= _cfg.star3Threshold) stars = 3;
+            // O recorde de pontos vale mesmo sem vencer; estrelas só com a meta batida.
+            if (_profileService.RegisterBestScore(levelId, total))
+                Debug.Log($"[DefeatPresenter] Novo recorde em {levelId}: {total}");
+            var newRecord = total > previousBest;
 
             OnModelReady?.Invoke(new DefeatModel
             {
                 levelId = levelId,
                 totalScore = total,
                 targetScore = _cfg.targetScore,
-                starsEarned = stars,
+                starsEarned = 0,
                 bestBefore = previousBest,
                 newRecord = newRecord,
                 timeLeftSeconds = _time.TimeLeftSeconds
             });
-            
-            InterstitialAdManager.Instance?.OnMatchCompleted();
+
+            // O anúncio de fim de partida agora sai na transição (GameControllerInitializer),
+            // não aqui: antes a derrota contava duas vezes e o anúncio cobria a tela de resultado.
         }
     }
 }

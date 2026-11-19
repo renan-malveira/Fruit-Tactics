@@ -3,6 +3,10 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 #endif
 
+/// <summary>
+/// Botão Voltar do Android. Desde a v2.2 não fecha mais o jogo: repassa para o
+/// Core.BackButtonRouter (pausa, fecha popup ou manda o app para segundo plano).
+/// </summary>
 public class AndroidQuitHandler : MonoBehaviour
 {
     private static AndroidQuitHandler _instance;
@@ -18,10 +22,9 @@ public class AndroidQuitHandler : MonoBehaviour
         {
             Destroy(gameObject);
         }
-        
     }
 
-#if UNITY_ANDROID && !UNITY_EDITOR
+#if UNITY_ANDROID || UNITY_EDITOR
     private void Update()
     {
         bool backPressed = false;
@@ -37,17 +40,7 @@ public class AndroidQuitHandler : MonoBehaviour
         #endif
 
         if (backPressed)
-        {
-            Debug.Log("Back button pressionado - encerrando o jogo");
-            Application.Quit();
-
-            // Se quiser **minimizar** em vez de fechar:
-            // using (var unityPlayer = new AndroidJavaClass("com.unity3d.player.UnityPlayer"))
-            // using (var activity = unityPlayer.GetStatic<AndroidJavaObject>("currentActivity"))
-            // {
-            //     activity.Call<bool>("moveTaskToBack", true);
-            // }
-        }
+            Core.BackButtonRouter.HandleBack();
     }
 #endif
 }

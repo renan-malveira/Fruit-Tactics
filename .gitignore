@@ -73,3 +73,15 @@ crashlytics-build.properties
 # Temporary auto-generated Android Assets
 **/[Aa]ssets/[Ss]treamingAssets/aa.meta
 **/[Aa]ssets/[Ss]treamingAssets/aa/*
+# Assinatura e certificados (nunca versionar)
+*.keystore
+*.jks
+*.pem
+*.der
+*.p12
+*.mobileprovision
+
+# Artefatos de build/crash
+mono_crash.*.json
+*_BurstDebugInformation_DoNotShip/
+*_BackUpThisFolder_ButDontShipItWithYourGame/

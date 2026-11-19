@@ -50,17 +50,17 @@ namespace UI.Views
 
             if (titleText)
             {
-                titleText.text = !string.IsNullOrEmpty(model.displayName)
-                    ? model.displayName
-                    : Localizer.Instance.TrFormat("pre_round_play", "Fase {0}", model.levelId);
+                titleText.text = model.levelNumber > 0
+                    ? Localizer.Instance.TrFormat("level_title", "Fase {0}", model.levelNumber)
+                    : model.displayName;
             }
 
             if (objectiveText)
             {
                 objectiveText.text = Localizer.Instance.TrFormat(
                     "pre_round_objective",
-                    "Faça pontos em <b>{1}</b> segundos para ganhar estrelas!",
-                    model.targetScore,
+                    "Faça <b>{0}</b> pontos antes de o tempo acabar! Você começa com <b>{1}</b> segundos.",
+                    model.targetScore.ToString("N0"),
                     model.initialTimeSec);
             }
 
@@ -74,13 +74,16 @@ namespace UI.Views
                         model.bestScore);
             }
 
-            if (star1ScoreLabel) star1ScoreLabel.text = model.star1Score.ToString("N0");
-            if (star2ScoreLabel) star2ScoreLabel.text = model.star2Score.ToString("N0");
-            if (star3ScoreLabel) star3ScoreLabel.text = model.star3Score.ToString("N0");
+            // Cada estrela mostra o seu critério: meta de pontos, tempo-alvo e "sem erros".
+            SetStarLabel(star1ScoreLabel, model.star1Score.ToString("N0"));
+            SetStarLabel(star2ScoreLabel, model.parTimeSeconds > 0
+                ? Localizer.Instance.TrFormat("pre_round_star_time", "Até {0}s", model.star2Score)
+                : Localizer.Instance.TrFormat("pre_round_star_time_left", "{0}s sobrando", model.star2Score));
+            SetStarLabel(star3ScoreLabel, Localizer.Instance.Tr("pre_round_star_perfect", "Sem erros"));
 
-            SetStarImmediate(star1, model.bestScore >= model.star1Score);
-            SetStarImmediate(star2, model.bestScore >= model.star2Score);
-            SetStarImmediate(star3, model.bestScore >= model.star3Score);
+            SetStarImmediate(star1, model.bestStars >= 1);
+            SetStarImmediate(star2, model.bestStars >= 2);
+            SetStarImmediate(star3, model.bestStars >= 3);
 
             mainMenuButton?.onClick.AddListener(() => SceneManager.LoadScene("MainMenu"));
 
@@ -107,11 +110,11 @@ namespace UI.Views
 
         private IEnumerator RevealStars()
         {
-            yield return AnimateStar(star1, _model.bestScore >= _model.star1Score);
+            yield return AnimateStar(star1, _model.bestStars >= 1);
             yield return new WaitForSecondsRealtime(starRevealDelay);
-            yield return AnimateStar(star2, _model.bestScore >= _model.star2Score);
+            yield return AnimateStar(star2, _model.bestStars >= 2);
             yield return new WaitForSecondsRealtime(starRevealDelay);
-            yield return AnimateStar(star3, _model.bestScore >= _model.star3Score);
+            yield return AnimateStar(star3, _model.bestStars >= 3);
         }
 
         private IEnumerator AnimateStar(Image img, bool achieved)
@@ -132,6 +135,20 @@ namespace UI.Views
             }
 
             yield return tween.WaitForCompletion();
+        }
+
+        private static void SetStarLabel(TextMeshProUGUI label, string text)
+        {
+            if (!label) return;
+
+            // Os rótulos eram só números; textos como "Sem erros" precisam caber no mesmo espaço.
+            if (!label.enableAutoSizing)
+            {
+                label.fontSizeMax = label.fontSize;
+                label.fontSizeMin = Mathf.Max(10f, label.fontSize * 0.5f);
+                label.enableAutoSizing = true;
+            }
+            label.text = text;
         }
 
         private void SetStarImmediate(Image img, bool achieved)

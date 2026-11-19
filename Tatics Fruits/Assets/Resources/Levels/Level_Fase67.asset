@@ -15,7 +15,7 @@ MonoBehaviour:
   levelId: fase_67
   displayName: Fase 67
   description: 
-  targetScore: 1900
+  targetScore: 1460
   initialTimeSeconds: 48
   handSize: 8
   deckSize: 64
@@ -28,12 +28,13 @@ MonoBehaviour:
   fixedSeed: 0
   scorePerPairBase: 0
   scorePerCardValueFactor: 10
-  comboWindows: 2200
+  comboWindows: 4300
   comboMultipliers:
   - 1
   - 1.2
   - 1.5
   - 2
+  parTimeSeconds: 65
   star1Threshold: 0.33
   star2Threshold: 0.66
   star3Threshold: 1

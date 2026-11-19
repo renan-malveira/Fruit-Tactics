@@ -5,28 +5,25 @@ namespace Ads
 {
     public class AdMobBannerProvider : IBannerAdProvider
     {
-        private const string ANDROID_AD_UNIT_ID = "ca-app-pub-8609532543875876/5682573689";
-        private const string IOS_AD_UNIT_ID = "ca-app-pub-8609532543875876/5682573689";
-
-        private string _adUnitId;
+        private readonly string _adUnitId;
+        private readonly bool _hasValidUnit;
         private BannerView _bannerView;
         private bool _isBannerShowing;
 
         public AdMobBannerProvider()
         {
-#if UNITY_ANDROID
-            _adUnitId = ANDROID_AD_UNIT_ID;
-#elif UNITY_IOS
-            _adUnitId = IOS_AD_UNIT_ID;
-#else
-            _adUnitId = ANDROID_AD_UNIT_ID;
-#endif
+            _adUnitId = Core.StoreConfig.BannerUnitId;
+            _hasValidUnit = Core.StoreConfig.IsUsableAdUnit(_adUnitId);
 
-            Debug.Log($"[AdMobBannerProvider] Initialized with ad unit ID: {_adUnitId}");
+            if (!_hasValidUnit)
+                Debug.LogWarning("[AdMobBannerProvider] Nenhuma unidade de banner válida para esta plataforma (veja StoreConfig). Banner desativado.");
         }
 
         public void LoadAndShowBanner()
         {
+            if (!_hasValidUnit)
+                return;
+
             if (_bannerView != null)
             {
                 Debug.Log("[AdMobBannerProvider] Banner already exists. Showing existing banner.");

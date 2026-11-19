@@ -8,44 +8,46 @@ namespace Ads
 {
     public class PushNotificationManager : MonoBehaviour
     {
-        async void Start()
+        void Start()
         {
 #if UNITY_ANDROID || UNITY_IOS
-            Debug.Log("[PushNotification] Starting initialization...");
-            
+            // A permissão de notificação só é pedida depois dos termos/consentimento,
+            // nunca no primeiro frame do app.
+            Core.Privacy.ConsentManager.WhenResolved(() =>
+            {
+                if (this == null) return;
+                if (!Core.Privacy.ConsentManager.CanAskForNotifications) return;
+                RegisterAsync();
+            });
+#endif
+        }
+
+#if UNITY_ANDROID || UNITY_IOS
+        private async void RegisterAsync()
+        {
             try
             {
-                Debug.Log("[PushNotification] Initializing Unity Services...");
                 await UnityServices.InitializeAsync();
-                Debug.Log("[PushNotification] Unity Services initialized successfully!");
 
-                Debug.Log("[PushNotification] Starting Analytics data collection...");
-                AnalyticsService.Instance.StartDataCollection();
-                Debug.Log("[PushNotification] Analytics started!");
+                // O pacote de push depende do Analytics. Sem consentimento de analytics, não registra.
+                if (!Core.Privacy.ConsentManager.CanCollectAnalytics)
+                {
+                    Debug.Log("[PushNotification] Sem consentimento de analytics; push não registrado.");
+                    return;
+                }
 
-                Debug.Log("[PushNotification] Registering for push notifications...");
-                string pushToken = await PushNotificationsService.Instance.RegisterForPushNotificationsAsync();
-                Debug.Log($"[PushNotification] SUCCESS! Token: {pushToken}");
-
+                await PushNotificationsService.Instance.RegisterForPushNotificationsAsync();
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                Debug.Log("[PushNotification] Registrado para notificações.");
+#endif
                 PushNotificationsService.Instance.OnRemoteNotificationReceived += OnNotificationReceived;
             }
             catch (Exception e)
             {
-                Debug.LogError($"[PushNotification] FAILED: {e.Message}");
-                Debug.LogError($"[PushNotification] Exception Type: {e.GetType().Name}");
-                
-                if (e.InnerException != null)
-                {
-                    Debug.LogError($"[PushNotification] Inner Exception: {e.InnerException.Message}");
-                    Debug.LogError($"[PushNotification] Inner Exception Type: {e.InnerException.GetType().Name}");
-                }
-                
-                Debug.LogError($"[PushNotification] Full Stack Trace: {e}");
+                Debug.LogWarning($"[PushNotification] Falha ao registrar: {e.Message}");
             }
-#else
-            Debug.Log("Push notifications only work on Android and iOS devices.");
-#endif
         }
+#endif
 
 #if UNITY_ANDROID || UNITY_IOS
         void OnNotificationReceived(System.Collections.Generic.IDictionary<string, object> notificationData)

@@ -42,14 +42,18 @@ namespace Ads
 
         private System.Collections.IEnumerator InitializeAdsAfterDelay()
         {
-            Debug.Log("[AdInitializer] Waiting for Google Mobile Ads SDK initialization...");
-            yield return new WaitForSeconds(1f);
+            // Espera o fluxo de consentimento (LGPD -> UMP -> ATT) terminar.
+            while (!Core.Privacy.ConsentManager.IsResolved)
+                yield return new WaitForSeconds(0.5f);
+
+            if (!Core.Privacy.ConsentManager.CanRequestAds)
+            {
+                Debug.LogWarning("[AdInitializer] Consentimento não permite anúncios. Provedores não serão criados.");
+                yield break;
+            }
 
             while (!GoogleMobileAdsInitializer.IsInitialized())
-            {
-                Debug.Log("[AdInitializer] Still waiting for SDK initialization...");
                 yield return new WaitForSeconds(0.5f);
-            }
 
             Debug.Log("[AdInitializer] SDK initialized! Now initializing ad providers...");
             InitializeAds();

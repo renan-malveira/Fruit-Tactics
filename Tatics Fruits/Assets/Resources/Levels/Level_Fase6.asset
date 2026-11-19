@@ -15,7 +15,7 @@ MonoBehaviour:
   levelId: fase_6
   displayName: Fase 6
   description: "Fa\xE7a {0} pontos em {0} segundos!"
-  targetScore: 100
+  targetScore: 620
   initialTimeSeconds: 60
   handSize: 6
   deckSize: 60
@@ -28,12 +28,13 @@ MonoBehaviour:
   fixedSeed: 0
   scorePerPairBase: 0
   scorePerCardValueFactor: 0
-  comboWindows: 5000
+  comboWindows: 4900
   comboMultipliers:
   - 0
   - 0
   - 0
   - 0
+  parTimeSeconds: 40
   star1Threshold: 0.25
   star2Threshold: 0.5
   star3Threshold: 1

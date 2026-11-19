@@ -15,7 +15,7 @@ MonoBehaviour:
   levelId: fase_89
   displayName: Fase 89
   description: 
-  targetScore: 5500
+  targetScore: 1640
   initialTimeSeconds: 33
   handSize: 10
   deckSize: 64
@@ -28,12 +28,13 @@ MonoBehaviour:
   fixedSeed: 0
   scorePerPairBase: 0
   scorePerCardValueFactor: 10
-  comboWindows: 1400
+  comboWindows: 4000
   comboMultipliers:
   - 1
   - 1.2
   - 1.5
   - 2
+  parTimeSeconds: 60
   star1Threshold: 0.33
   star2Threshold: 0.66
   star3Threshold: 1

@@ -49,7 +49,7 @@ namespace Gameplay.Utils
     }
 
     [Serializable]
-    public class PlayerProfileData : ISaveData
+    public class PlayerProfileData : ISaveData, UnityEngine.ISerializationCallbackReceiver
     {
         public string playerName = "Jogador";
         public int avatarIndex = 0;
@@ -66,8 +66,19 @@ namespace Gameplay.Utils
         public bool removeAds = false;
     
         public DailySystemData daily = new DailySystemData();
-        public Dictionary<string, int> BestScores = new Dictionary<string, int>();
-    
+
+        // Recorde e estrelas por fase (chave = LevelConfigSo.LevelKey). Os Dictionary não são
+        // gravados pelo JsonUtility: o conteúdo vai para as listas abaixo (ver IntMapSerializer).
+        [NonSerialized] public Dictionary<string, int> BestScores = new Dictionary<string, int>();
+        [NonSerialized] public Dictionary<string, int> LevelStars = new Dictionary<string, int>();
+        public List<string> bestScoreKeys = new List<string>();
+        public List<int> bestScoreValues = new List<int>();
+        public List<string> levelStarKeys = new List<string>();
+        public List<int> levelStarValues = new List<int>();
+
+        /// <summary>true depois que o levels_progress.json antigo foi incorporado a este perfil.</summary>
+        public bool levelProgressMigrated;
+
         public List<string> ownedCards = new List<string>();
         public List<string> equippedDeck = new List<string>();
         public List<int> unlockedAvatars =  new List<int> {0};
@@ -90,6 +101,25 @@ namespace Gameplay.Utils
             if (daily == null) daily = new DailySystemData();
             if (daily.login == null) daily.login = new DailyLoginData();
             if (BestScores == null) BestScores = new Dictionary<string, int>();
+            if (LevelStars == null) LevelStars = new Dictionary<string, int>();
+            if (currentLevelIndex < 0) currentLevelIndex = 0;
+            if (highestLevelUnlocked < 0) highestLevelUnlocked = 0;
+        }
+
+        public void OnBeforeSerialize()
+        {
+            bestScoreKeys ??= new List<string>();
+            bestScoreValues ??= new List<int>();
+            levelStarKeys ??= new List<string>();
+            levelStarValues ??= new List<int>();
+            IntMapSerializer.Write(BestScores, bestScoreKeys, bestScoreValues);
+            IntMapSerializer.Write(LevelStars, levelStarKeys, levelStarValues);
+        }
+
+        public void OnAfterDeserialize()
+        {
+            BestScores = IntMapSerializer.Read(bestScoreKeys, bestScoreValues);
+            LevelStars = IntMapSerializer.Read(levelStarKeys, levelStarValues);
         }
     }
 }

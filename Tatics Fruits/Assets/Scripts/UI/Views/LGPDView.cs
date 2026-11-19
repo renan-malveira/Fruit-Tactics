@@ -62,6 +62,15 @@ namespace UI.Views
 
             rootPanel.SetActive(true);
 
+            // Texto traduzido e atualizado (StreamingAssets/i18n: descriptionTerms_text).
+            // O texto fixo no prefab fica só como reserva.
+            if (lgpdText != null && Localizer.Instance != null)
+            {
+                var localized = Localizer.Instance.Tr("descriptionTerms_text", string.Empty);
+                if (!string.IsNullOrEmpty(localized) && localized != "descriptionTerms_text")
+                    lgpdText.text = localized;
+            }
+
             if (panelRect != null)
                 _panelOriginalPos = panelRect.anchoredPosition;
             if (acceptButtonRect != null)
@@ -111,6 +120,15 @@ namespace UI.Views
                 scrollRect.onValueChanged.AddListener(OnScrollValueChanged);
                 Canvas.ForceUpdateCanvases();
                 scrollRect.verticalNormalizedPosition = 1f;
+
+                // Se o texto couber inteiro na tela, não há rolagem e o botão nunca apareceria.
+                var content = scrollRect.content;
+                var viewport = scrollRect.viewport != null ? scrollRect.viewport : (RectTransform)scrollRect.transform;
+                if (content != null && content.rect.height <= viewport.rect.height + 1f)
+                {
+                    hasReachedEnd = true;
+                    ShowAcceptButton();
+                }
             }
         }
 
@@ -225,6 +243,9 @@ namespace UI.Views
                 dataSaver.SaveData(force: true);
                 Debug.Log("[LGPDView] LGPD acceptance synced to Firebase");
             }
+
+            // Segue para o consentimento de anúncios (UMP) e o ATT do iOS.
+            Core.Privacy.ConsentManager.NotifyTermsAccepted();
 
             FadeOut();
         }

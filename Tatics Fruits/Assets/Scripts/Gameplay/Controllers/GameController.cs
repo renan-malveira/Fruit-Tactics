@@ -89,7 +89,8 @@ namespace Gameplay.Controllers
         {
             _cfg = cfg;
             var rng = cfg.useFixedSeed ? new Random(cfg.fixedSeed) : new Random();
-            _deck.Build(deckCfg, rng);
+            // Cada fase aponta para o seu baralho; o da cena fica só como reserva.
+            _deck.Build(cfg.deck != null ? cfg.deck : deckCfg, rng);
             _fsm.SetState(DefaultNamespace.New_GameplayCore.GameState.PreRound);
             OnEnterPreRound?.Invoke();
             var cards = new List<CardInstance>();
@@ -100,6 +101,9 @@ namespace Gameplay.Controllers
         public void UpdateTick(float deltaTime)
         {
             if (_fsm.Current != DefaultNamespace.New_GameplayCore.GameState.Playing)
+                return;
+            // Pausado (menu aberto): nem o relógio nem a janela do combo andam.
+            if (_time.IsPaused)
                 return;
             (_time as TimeManager)?.Tick(deltaTime);
             float deltaMs = deltaTime * 1000f;
@@ -126,6 +130,38 @@ namespace Gameplay.Controllers
             _selectedCard = null;
         }
 
+        /// <summary>
+        /// Resolve as duas cartas soltas na área de jogo. Não depende da seleção por toque
+        /// (OnCardSelected), que podia ficar com uma carta antiga guardada.
+        /// </summary>
+        public bool TryResolvePair(CardInstance first, CardInstance second)
+        {
+            if (_fsm.Current != DefaultNamespace.New_GameplayCore.GameState.Playing)
+                return false;
+
+            _selectedCard = null;
+
+            if (!_rule.TryMakePair(first, second, out _))
+                return false;
+
+            TryDrawReplacement();
+            TryDrawReplacement();
+            return true;
+        }
+
+        public void ReportInvalidPair()
+        {
+            if (_fsm.Current != DefaultNamespace.New_GameplayCore.GameState.Playing)
+                return;
+            _rule.ReportInvalidPair();
+        }
+
+        /// <summary>Devolve para a mão a carta que estava esperando o par na área de jogo.</summary>
+        public bool ReturnCardToHand(CardInstance card)
+        {
+            return _hand.TryAdd(card);
+        }
+
         private void TryDrawReplacement()
         {
             if (!_hand.HasSpace) return;
@@ -142,8 +178,13 @@ namespace Gameplay.Controllers
 
         public void BeginPlayFromPreRound(PreRoundModel model)
         {
-            _time.TryPay(_time.TimeLeftSeconds);
-            _time.Add(_cfg.initialTimeSeconds);
+            if (_time is TimeManager timeManager)
+                timeManager.Reset(_cfg.initialTimeSeconds);
+            else
+            {
+                _time.TryPay(_time.TimeLeftSeconds);
+                _time.Add(_cfg.initialTimeSeconds);
+            }
 
             // Return the pre-round hand back to the deck before clearing,
             // so cards aren't permanently lost when the round begins.

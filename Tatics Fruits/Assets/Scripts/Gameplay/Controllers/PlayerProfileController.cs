@@ -87,7 +87,10 @@ namespace Gameplay.Controllers
             }
 
             Data.gold = remoteData.totalCoins;
-            Data.currentLevelIndex = remoteData.crrLevel;
+            Data.currentLevelIndex = Mathf.Max(0, remoteData.crrLevel);
+            Data.highestLevelUnlocked = Mathf.Max(Data.highestLevelUnlocked, remoteData.highScore);
+            Data.BestScores = IntMapSerializer.MergeMax(Data.BestScores, remoteData.BestScores);
+            Data.LevelStars = IntMapSerializer.MergeMax(Data.LevelStars, remoteData.LevelStars);
             Data.playerName = remoteData.userName;
             
             UpdateGoldUI();
@@ -121,7 +124,7 @@ namespace Gameplay.Controllers
         private void UpdateLevelUI()
         {
             if (playerLevelText != null)
-                playerLevelText.text = $"Level: {Data.currentLevelIndex + 1}";
+                playerLevelText.text = Localizer.Instance.TrFormat("profile_level", "Fase {0}", Data.currentLevelIndex + 1);
         }
 
         private void UpdateAvatarUI()
@@ -312,6 +315,8 @@ namespace Gameplay.Controllers
             dataSaver.dataToSave.userName = Data.playerName;
             dataSaver.dataToSave.crrLevel = Data.currentLevelIndex;
             dataSaver.dataToSave.highScore = Data.highestLevelUnlocked;
+            dataSaver.dataToSave.BestScores = new Dictionary<string, int>(Data.BestScores ?? new Dictionary<string, int>());
+            dataSaver.dataToSave.LevelStars = new Dictionary<string, int>(Data.LevelStars ?? new Dictionary<string, int>());
             dataSaver.dataToSave.ownedCards = new List<string>(Data.ownedCards);
             dataSaver.dataToSave.equippedDeck = new List<string>(Data.equippedDeck);
             dataSaver.dataToSave.unlockedAvatar = new List<int>(Data.unlockedAvatars);

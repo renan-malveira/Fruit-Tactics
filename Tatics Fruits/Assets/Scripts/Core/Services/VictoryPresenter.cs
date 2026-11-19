@@ -1,5 +1,4 @@
 using System;
-using Ads;
 using Core.ScriptableObjects;
 using New_GameplayCore;
 using New_GameplayCore.Services;
@@ -15,10 +14,12 @@ namespace Core.Services
         private readonly PlayerProfileService _profileService;
         private readonly ILevelProgressService _progress;
         private readonly LevelSetSO _levelSet;
+        private readonly int _mistakes;
 
         public Action<VictoryModel> OnModelReady;
         public event Action OnNext;
         public event Action OnReplay;
+        public event Action OnMenu;
 
         public VictoryPresenter(
             LevelConfigSo cfg,
@@ -26,7 +27,8 @@ namespace Core.Services
             ITimeManager time,
             PlayerProfileService profileService,
             ILevelProgressService progress,
-            LevelSetSO levelSet)
+            LevelSetSO levelSet,
+            int mistakes = 0)
         {
             _cfg = cfg;
             _score = score;
@@ -34,42 +36,45 @@ namespace Core.Services
             _profileService = profileService;
             _progress = progress;
             _levelSet = levelSet;
+            _mistakes = Mathf.Max(0, mistakes);
         }
 
         public void Build()
         {
             var total = _score.Total;
             var target = _cfg.targetScore;
-            
-            var pct = Mathf.Clamp01(total/(float)target);
-            var stars = 0;
-            if(pct >= _cfg.star1Threshold) stars = 1;
-            if(pct >= _cfg.star2Threshold) stars = 2;
-            if(pct >= _cfg.star3Threshold || total >= target) stars = 3;
+            var levelId = _cfg.LevelKey;
+            var levelIndex = _progress.CurrentIndex;
 
-            var levelId = string.IsNullOrEmpty(_cfg.levelId) ? _cfg.name : _cfg.levelId;
+            var stars = StarRules.Evaluate(_cfg, true, _time.ElapsedSeconds, _time.TimeLeftSeconds, _mistakes);
+
+            // Lê o recorde e as estrelas ANTES de gravar o resultado novo.
             var previousBest = _profileService.GetBestScore(levelId);
-            
-            _profileService.RegisterBestScore(levelId, total);
+            var previousStars = _profileService.GetLevelStars(levelId);
             var newRecord = total > previousBest;
-            
-            _progress.RecordResult(_cfg, total, stars);
 
-            var canNext = _progress.CanAdvance(_cfg, total, 0.75f);
+            _progress.RecordResult(_cfg, total, stars);
 
             OnModelReady?.Invoke(new VictoryModel
             {
+                levelId = levelId,
                 totalScore = total,
                 targetScore = target,
                 bestBefore = previousBest,
                 newRecord = newRecord,
                 starsEarned = stars,
-                canGoNext = canNext,
-                levelIndex = _progress.CurrentIndex
+                previousStars = previousStars,
+                canGoNext = true,
+                levelIndex = levelIndex,
+                timeLeftSeconds = _time.TimeLeftSeconds,
+                elapsedSeconds = Mathf.CeilToInt(_time.ElapsedSeconds),
+                parTimeSeconds = _cfg.parTimeSeconds,
+                mistakes = _mistakes
             });
         }
-        
+
         public void ClickNext() => OnNext?.Invoke();
         public void ClickReplay() => OnReplay?.Invoke();
+        public void ClickMenu() => OnMenu?.Invoke();
     }
 }

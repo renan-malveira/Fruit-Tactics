@@ -44,30 +44,49 @@ namespace Ads
             RescheduleIfVipActive();
         }
 
+        /// <summary>
+        /// Este serviço sobrevive à troca de cena, mas o DataSaver da MainMenu é recriado
+        /// a cada volta ao menu. Usa a referência do Inspector enquanto ela existir; depois, a atual.
+        /// </summary>
+        private DataSaver Saver
+        {
+            get
+            {
+                if (dataSaver == null && DataSaver.Current != null)
+                {
+                    dataSaver = DataSaver.Current;
+                    dataSaver.OnRemoteDataChanged -= OnRemoteDataChanged;
+                    dataSaver.OnRemoteDataChanged += OnRemoteDataChanged;
+                }
+                return dataSaver;
+            }
+        }
+
         public bool ShouldShowAds()
         {
-            if (dataSaver?.dataToSave == null)
+            var saver = Saver;
+            if (saver == null || saver.dataToSave == null)
                 return true;
 
-            if (dataSaver.dataToSave.removeAds)
+            if (saver.dataToSave.removeAds)
                 return false;
 
-            if (!dataSaver.dataToSave.isVip)
+            if (!saver.dataToSave.isVip)
                 return true;
 
-            if (dataSaver.dataToSave.vipExpirationTicks == 0)
+            if (saver.dataToSave.vipExpirationTicks == 0)
                 return false;
 
-            return DateTime.UtcNow.Ticks >= dataSaver.dataToSave.vipExpirationTicks;
+            return DateTime.UtcNow.Ticks >= saver.dataToSave.vipExpirationTicks;
         }
 
         public void GrantVip(long expirationTicks)
         {
-            if (dataSaver?.dataToSave == null) return;
+            if (Saver?.dataToSave == null) return;
 
-            dataSaver.dataToSave.isVip = true;
-            dataSaver.dataToSave.vipExpirationTicks = expirationTicks;
-            dataSaver.SaveData(force: true);
+            Saver.dataToSave.isVip = true;
+            Saver.dataToSave.vipExpirationTicks = expirationTicks;
+            Saver.SaveData(force: true);
 
             VipNotificationScheduler.Schedule(expirationTicks);
             OnAdStatusChanged?.Invoke();
@@ -75,11 +94,11 @@ namespace Ads
 
         public void RevokeVip()
         {
-            if (dataSaver?.dataToSave == null) return;
+            if (Saver?.dataToSave == null) return;
 
-            dataSaver.dataToSave.isVip = false;
-            dataSaver.dataToSave.vipExpirationTicks = 0;
-            dataSaver.SaveData(force: true);
+            Saver.dataToSave.isVip = false;
+            Saver.dataToSave.vipExpirationTicks = 0;
+            Saver.SaveData(force: true);
 
             VipNotificationScheduler.CancelAll();
             OnAdStatusChanged?.Invoke();
@@ -92,11 +111,11 @@ namespace Ads
 
         private void RescheduleIfVipActive()
         {
-            if (dataSaver?.dataToSave == null) return;
-            if (!dataSaver.dataToSave.isVip) return;
-            if (dataSaver.dataToSave.vipExpirationTicks <= 0) return;
+            if (Saver?.dataToSave == null) return;
+            if (!Saver.dataToSave.isVip) return;
+            if (Saver.dataToSave.vipExpirationTicks <= 0) return;
 
-            VipNotificationScheduler.Schedule(dataSaver.dataToSave.vipExpirationTicks);
+            VipNotificationScheduler.Schedule(Saver.dataToSave.vipExpirationTicks);
         }
     }
 }

@@ -10,7 +10,19 @@ namespace Ads
 
         private void Start()
         {
-            InitializeGoogleMobileAds();
+            // O SDK só pode ser inicializado depois do consentimento (UMP/ATT).
+            Core.Privacy.ConsentManager.WhenResolved(() =>
+            {
+                if (this == null) return;
+
+                if (!Core.Privacy.ConsentManager.CanRequestAds)
+                {
+                    Debug.LogWarning("[GoogleMobileAdsInitializer] Consentimento não permite anúncios. SDK não inicializado.");
+                    return;
+                }
+
+                InitializeGoogleMobileAds();
+            });
         }
 
         private void InitializeGoogleMobileAds()

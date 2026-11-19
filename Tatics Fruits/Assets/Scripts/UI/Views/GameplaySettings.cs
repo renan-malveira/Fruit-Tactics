@@ -166,6 +166,26 @@ namespace New_GameplayCore.Views
             }
         }
 
+        /// <summary>
+        /// Botão Voltar na partida: fecha o popup de sair (e continua), fecha a pausa
+        /// ou abre a pausa. Chamado pelo Core.BackButtonRouter.
+        /// </summary>
+        public bool HandleBack()
+        {
+            var popup = FindFirstObjectByType<QuitPopup>();
+            if (popup != null)
+            {
+                popup.Continue();
+                return true;
+            }
+
+            if (settingsPanel == null)
+                return false;
+
+            ToggleSettingsMenu();
+            return true;
+        }
+
         public void CloseSettings()
         {
             if (settingsPanel != null && settingsPanel.activeSelf)

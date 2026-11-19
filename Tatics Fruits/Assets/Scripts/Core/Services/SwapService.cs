@@ -28,7 +28,7 @@ namespace Core.Services
         {
             int penalty = _cfg.swapAllTimePenalty;
 
-            if (!_time.CanPay(penalty) || _hand.Cards.Count == 0)
+            if (!CanAfford(penalty) || _hand.Cards.Count == 0)
             {
                 OnSwapAllAttempted?.Invoke(false, penalty);
                 return false;
@@ -54,7 +54,7 @@ namespace Core.Services
         {
             var penalty = _cfg.swapRandomTimePenalty;
 
-            if (!_time.CanPay(penalty))
+            if (!CanAfford(penalty))
             {
                 OnSwapRandomAttempted?.Invoke(false, penalty);
                 return false;
@@ -95,6 +95,12 @@ namespace Core.Services
             OnSwapRandomAttempted?.Invoke(true, penalty);
             return true;
         }
+
+        /// <summary>
+        /// A troca só é aceita se sobrar pelo menos 1 segundo depois de pagar.
+        /// Antes dava para trocar com o tempo exato e perder a fase na hora.
+        /// </summary>
+        private bool CanAfford(int penalty) => _time.TimeLeftSeconds > penalty;
 
         private void DrawUpTo(int target, IList<CardInstance> buffer)
         {

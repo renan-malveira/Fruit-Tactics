@@ -41,5 +41,5 @@ MonoBehaviour:
     quantity: 4
   - type: {fileID: 11400000, guid: 26bf6f77d8e684e44aa6898ce8f857a2, type: 2}
     quantity: 4
-  - type: {fileID: 11400000, guid: 8482252c6eb268848991af4bd8b6257e, type: 2}
+  - type: {fileID: 11400000, guid: c8a0914077f70584993f9352a963a900, type: 2}
     quantity: 4

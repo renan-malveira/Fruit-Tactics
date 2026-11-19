@@ -15,6 +15,9 @@ namespace Core.Services
         void StartLevel(LevelConfigSo cfg, DeckConfigSo deckCfg);
         void UpdateTick(float deltaTime);
         void OnCardSelected(CardInstance card);
+        bool TryResolvePair(CardInstance first, CardInstance second);
+        void ReportInvalidPair();
+        bool ReturnCardToHand(CardInstance card);
         void BeginPlayFromPreRound(PreRoundModel model);
         void BackToLevelSelect();
         void OnSwapAllRequested();

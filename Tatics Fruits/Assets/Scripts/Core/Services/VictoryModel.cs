@@ -13,5 +13,9 @@ namespace Core.Services
         public int    goldEarned;
         public bool   newRecord;
         public bool   canGoNext;
+        public int    previousStars;
+        public int    elapsedSeconds;
+        public int    parTimeSeconds;
+        public int    mistakes;
     }
 }

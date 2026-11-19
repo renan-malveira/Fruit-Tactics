@@ -1,3 +1,4 @@
+using System;
 using DG.Tweening;
 using New_GameplayCore.Views;
 using UI.Views;
@@ -7,8 +8,11 @@ using UnityEngine.EventSystems;
 namespace New_GameplayCore
 {
     [RequireComponent(typeof(CanvasGroup))]
-    public class CardDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
+    public class CardDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler, IPointerClickHandler
     {
+        /// <summary>Toque sem arrastar (devolve à mão a carta que espera o par).</summary>
+        public event Action<CardDragHandler> Tapped;
+
         [Header("Refs")]
         [SerializeField] private Canvas canvas;
         [SerializeField] private RectTransform dragRoot;
@@ -76,6 +80,12 @@ namespace New_GameplayCore
             _rt.anchoredPosition = _originAnchoredPos;
         }
         
+        public void OnPointerClick(PointerEventData eventData)
+        {
+            if (!enabled || eventData.dragging) return;
+            Tapped?.Invoke(this);
+        }
+
         public void AcceptDrop(Transform newParent)
         {
             _accepted = true;

@@ -6,6 +6,7 @@ using DG.Tweening;
 using Gameplay.Utils;
 using TMPro;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 namespace UI.Views
@@ -41,6 +42,7 @@ namespace UI.Views
         [SerializeField] private float deleteDelaySeconds = 5f;
 
         private bool _isTransitioning;
+        private bool _isDeleting;
         private Vector2 _panelOriginalPos;
         private CancellationTokenSource _cts;
 
@@ -123,10 +125,11 @@ namespace UI.Views
 
             if (dimCanvasGroup != null)
             {
-                dimCanvasGroup.DOFade(dimTargetAlpha, fadeDuration).SetEase(Ease.OutSine);
+                dimCanvasGroup.DOFade(dimTargetAlpha, fadeDuration).SetEase(Ease.OutSine).SetLink(gameObject);
             }
-            
-            var seq = DOTween.Sequence();
+
+            // SetLink: a animação morre junto com o popup (antes seguia rodando após o Destroy).
+            var seq = DOTween.Sequence().SetLink(gameObject);
 
             if (panelCanvasGroup != null)
             {
@@ -174,7 +177,7 @@ namespace UI.Views
             var softScale = 0.97f;
             var softMove = 8f;
 
-            var seq = DOTween.Sequence();
+            var seq = DOTween.Sequence().SetLink(gameObject);
 
             if (panelCanvasGroup != null)
             {
@@ -185,9 +188,8 @@ namespace UI.Views
             {
                 seq.Join(panelRect.DOAnchorPos(_panelOriginalPos + new Vector2(0f, -softMove), softDuration)
                     .SetEase(Ease.OutSine));
+                seq.Join(panelRect.DOScale(softScale, softDuration).SetEase(Ease.OutSine));
             }
-            
-            seq.Join(panelRect.DOScale(softScale, softDuration).SetEase(Ease.OutSine));
 
             if (dimCanvasGroup != null)
             {
@@ -197,7 +199,8 @@ namespace UI.Views
             seq.OnComplete(() =>
             {
                 _isTransitioning = false;
-                Destroy(gameObject);
+                if (this != null)
+                    Destroy(gameObject);
             });
         }
 
@@ -220,19 +223,23 @@ namespace UI.Views
             _cts?.Cancel();
             _cts?.Dispose();
             _cts = new CancellationTokenSource();
+            var token = _cts.Token; // o campo vira null quando o popup fecha
 
             var remaining = deleteDelaySeconds;
 
             while (remaining > 0f)
             {
-                if (_cts.Token.IsCancellationRequested)
+                if (token.IsCancellationRequested || this == null)
                     return;
 
                 var secondsInt = Mathf.CeilToInt(remaining);
                 if (countdownText != null)
                     countdownText.text = secondsInt.ToString();
-                
-                await UniTask.Delay(1000, cancellationToken: _cts.Token);
+
+                var cancelled = await UniTask.Delay(1000, ignoreTimeScale: true, cancellationToken: token)
+                    .SuppressCancellationThrow();
+                if (cancelled || this == null)
+                    return;
                 remaining -= 1f;
             }
             
@@ -248,12 +255,56 @@ namespace UI.Views
 
         private void OnConfirmDelete()
         {
-            if (_isTransitioning)
+            if (_isTransitioning || _isDeleting)
                 return;
-            
-            SaveManager.Instance.Delete<PlayerProfileData>();
-            
-            FadeOutAndDestroy();
+
+            RunDeletion().Forget();
+        }
+
+        private async UniTaskVoid RunDeletion()
+        {
+            _isDeleting = true;
+            SetButtonsInteractable(false);
+            SetStatus("delete_account_in_progress", "Excluindo sua conta...");
+
+            var result = await Core.Privacy.AccountDeletionService.DeleteAccountAsync();
+
+            if (this == null) return;
+
+            switch (result)
+            {
+                case Core.Privacy.AccountDeletionService.Result.Deleted:
+                case Core.Privacy.AccountDeletionService.Result.DataDeletedLoginSignedOut:
+                    SetStatus("delete_account_done", "Conta excluída.");
+                    await UniTask.Delay(1500, ignoreTimeScale: true);
+                    // Recomeça do zero: termos, consentimento e um perfil novo.
+                    SceneManager.LoadScene(0);
+                    return;
+
+                case Core.Privacy.AccountDeletionService.Result.Offline:
+                    SetStatus("delete_account_offline", "Sem internet. Conecte-se e tente de novo.");
+                    break;
+
+                default:
+                    SetStatus("delete_account_failed", "Não foi possível excluir agora. Tente de novo em instantes.");
+                    break;
+            }
+
+            _isDeleting = false;
+            SetButtonsInteractable(true);
+        }
+
+        private void SetButtonsInteractable(bool value)
+        {
+            if (deleteButton != null) deleteButton.interactable = value;
+            if (cancelButton != null) cancelButton.interactable = value;
+        }
+
+        private void SetStatus(string key, string fallback)
+        {
+            if (countdownText == null) return;
+            var loc = Gameplay.Utils.Localizer.Instance;
+            countdownText.text = loc != null ? loc.Tr(key, fallback) : fallback;
         }
 
         private void ClosePopup()
@@ -263,8 +314,8 @@ namespace UI.Views
 
         private void OnDestroy()
         {
-            _cts.Cancel();
-            _cts.Dispose();
+            _cts?.Cancel();
+            _cts?.Dispose();
             _cts = null;
             
             if(panelRect != null)

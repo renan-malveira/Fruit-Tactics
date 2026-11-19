@@ -24,11 +24,44 @@ namespace Managers
         private FirebaseAuth _firebaseAuth;
         private FirebaseUser _currentUser;
 
+        public static LoginManager Instance { get; private set; }
+
         private async void Awake()
         {
+            // A MainMenu traz um LoginManager novo a cada visita. Antes os dois ficavam vivos e o
+            // antigo seguia usando o DataSaver da visita anterior (já destruído). Agora o primeiro
+            // continua e só recebe o DataSaver novo da cena.
+            if (Instance != null && Instance != this)
+            {
+                Instance.AdoptSceneDataSaver(dataSaver);
+                Destroy(gameObject);
+                return;
+            }
+
+            Instance = this;
             DontDestroyOnLoad(gameObject);
             
             await InitializeFirebaseAsync();
+        }
+
+        private void OnDestroy()
+        {
+            if (Instance == this)
+                Instance = null;
+        }
+
+        /// <summary>
+        /// Recebe o DataSaver da cena recém-carregada e, se já houver login, carrega os dados nele.
+        /// </summary>
+        private void AdoptSceneDataSaver(DataSaver sceneDataSaver)
+        {
+            if (sceneDataSaver == null || sceneDataSaver == dataSaver)
+                return;
+
+            dataSaver = sceneDataSaver;
+
+            if (_currentUser != null)
+                OnFirebaseSignedIn(_currentUser);
         }
 
 
@@ -40,6 +73,11 @@ namespace Managers
             
                 if (dependencyStatus == DependencyStatus.Available)
                 {
+                    // Firebase Analytics começa desligado (manifest/Info.plist) e só liga com consentimento.
+                    Core.Privacy.ConsentManager.WhenResolved(() =>
+                        Firebase.Analytics.FirebaseAnalytics.SetAnalyticsCollectionEnabled(
+                            Core.Privacy.ConsentManager.CanCollectAnalytics));
+
                     _firebaseAuth = FirebaseAuth.DefaultInstance;
                     _currentUser = _firebaseAuth.CurrentUser;
 
@@ -189,17 +227,22 @@ namespace Managers
                     ? cloud.userName
                     : displayName;
 
+                // Fases liberadas, recordes e estrelas só sobem: junta nuvem e aparelho pelo maior valor,
+                // venha de onde vier o dado mais novo (troca de aparelho não perde progresso).
+                var data = profileController.Data;
+                data.highestLevelUnlocked = Mathf.Max(data.highestLevelUnlocked, cloud.highScore);
+                data.BestScores = Core.SaveSystem.IntMapSerializer.MergeMax(data.BestScores, cloud.BestScores);
+                data.LevelStars = Core.SaveSystem.IntMapSerializer.MergeMax(data.LevelStars, cloud.LevelStars);
+
                 if (cloudIsNewer)
                 {
                     profileController.Data.gold = cloud.totalCoins;
-                    profileController.Data.currentLevelIndex = cloud.crrLevel;
-                    profileController.Data.highestLevelUnlocked = cloud.highScore;
+                    profileController.Data.currentLevelIndex = Mathf.Max(0, cloud.crrLevel);
 
                     if (cloud.ownedCards != null) profileController.Data.ownedCards = new List<string>(cloud.ownedCards);
                     if (cloud.equippedDeck != null) profileController.Data.equippedDeck = new List<string>(cloud.equippedDeck);
                     if (cloud.unlockedAvatar != null) profileController.Data.unlockedAvatars = new List<int>(cloud.unlockedAvatar);
                     if (cloud.purchasedAvatar != null) profileController.Data.purchasedAvatars = new List<int>(cloud.purchasedAvatar);
-                    if (cloud.BestScores != null) profileController.Data.BestScores = new Dictionary<string, int>(cloud.BestScores);
 
                     profileController.Data.musicOn = cloud.musicOn;
                     profileController.Data.sfxOn = cloud.sfxOn;

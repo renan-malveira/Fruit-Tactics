@@ -6,25 +6,19 @@ namespace Ads
 {
     public class AdMobInterstitialProvider : IInterstitialAdProvider
     {
-        private const string ANDROID_AD_UNIT_ID = "ca-app-pub-8609532543875876/3409474969";
-        private const string IOS_AD_UNIT_ID = "ca-app-pub-3940256099942544/4411468910";
-
-        private string _adUnitId;
+        private readonly string _adUnitId;
+        private readonly bool _hasValidUnit;
         private InterstitialAd _interstitialAd;
         private Action _onAdCompleted;
         private Action _onAdFailed;
 
         public AdMobInterstitialProvider()
         {
-#if UNITY_ANDROID
-            _adUnitId = ANDROID_AD_UNIT_ID;
-#elif UNITY_IOS
-            _adUnitId = IOS_AD_UNIT_ID;
-#else
-            _adUnitId = ANDROID_AD_UNIT_ID;
-#endif
+            _adUnitId = Core.StoreConfig.InterstitialUnitId;
+            _hasValidUnit = Core.StoreConfig.IsUsableAdUnit(_adUnitId);
 
-            Debug.Log($"[AdMobInterstitialProvider] Initialized with ad unit ID: {_adUnitId}");
+            if (!_hasValidUnit)
+                Debug.LogWarning("[AdMobInterstitialProvider] Nenhuma unidade de intersticial válida para esta plataforma (veja StoreConfig). Anúncios desativados.");
         }
 
         public bool IsAdReady()
@@ -51,6 +45,9 @@ namespace Ads
 
         public void LoadAd()
         {
+            if (!_hasValidUnit)
+                return;
+
             if (_interstitialAd != null)
             {
                 _interstitialAd.Destroy();

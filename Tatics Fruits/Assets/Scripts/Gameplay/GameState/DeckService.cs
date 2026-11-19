@@ -10,7 +10,7 @@ namespace New_GameplayCore.Services
     {
         private readonly List<CardInstance> _deck = new();
         private readonly List<CardInstance> _discard = new();
-        private readonly System.Random _rng = new();
+        private System.Random _rng = new();
 
         public int DeckCount => _deck.Count;
         public int DiscardCount => _discard.Count;
@@ -25,6 +25,10 @@ namespace New_GameplayCore.Services
             _deck.Clear();
             _discard.Clear();
             TotalInitialCount = 0;
+
+            // Usa o gerador recebido: com useFixedSeed a fase sai sempre com a mesma ordem de cartas.
+            if (rng != null)
+                _rng = rng;
 
             if (config == null)
             {

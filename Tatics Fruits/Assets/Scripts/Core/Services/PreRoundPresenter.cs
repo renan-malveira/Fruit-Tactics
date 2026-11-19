@@ -37,11 +37,12 @@ namespace Core.Services
                     list.Add(new DeckEntrySummary { type = e.type, quantity = e.quantity });
             }
 
-            var s1 = Mathf.CeilToInt(cfg.targetScore * cfg.star1Threshold);
-            var s2 = Mathf.CeilToInt(cfg.targetScore * cfg.star2Threshold);
-            var s3 = cfg.targetScore;
-            
-            var levelId = string.IsNullOrEmpty(cfg.levelId) ? cfg.name : cfg.levelId;
+            // Estrelas da v2.2: 1 = meta, 2 = meta dentro do tempo-alvo, 3 = isso sem errar par.
+            var levelId = cfg.LevelKey;
+            var s1 = cfg.targetScore;
+            var s2 = cfg.parTimeSeconds > 0 ? cfg.parTimeSeconds : StarRules.FallbackTimeLeftSeconds(cfg);
+            var s3 = 0;
+
             var best = profileService.GetBestScore(levelId);
 
             _model = new PreRoundModel()
@@ -69,6 +70,9 @@ namespace Core.Services
                 
                 useFixedSeed = cfg.useFixedSeed,
                 effectiveSeed = cfg.useFixedSeed ? cfg.fixedSeed : Random.Range(int.MinValue, int.MaxValue),
+
+                parTimeSeconds = cfg.parTimeSeconds,
+                bestStars = profileService.GetLevelStars(levelId),
             };
             
             OnModelReady?.Invoke(_model);

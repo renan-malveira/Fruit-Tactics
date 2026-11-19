@@ -1,4 +1,5 @@
 using Core.SaveSystem;
+using Core.Services;
 using DG.Tweening;
 using Gameplay.Controllers;
 using Gameplay.Utils;
@@ -15,6 +16,8 @@ namespace UI.Menus
         [SerializeField] private Button playButton;
         [SerializeField] private Button rankingButton;
         [SerializeField] private Button storeButton;
+        [Tooltip("A loja ainda não existe (v2.3). Desligado, o botão fica escondido em vez de não fazer nada.")]
+        [SerializeField] private bool storeAvailable = false;
         [SerializeField] private Button dailyMissionsButton;
         [SerializeField] private Button settingsButton;
         [SerializeField] private Button profileButton;
@@ -98,7 +101,9 @@ namespace UI.Menus
                 var instance = Instantiate(lgpdViewPrefab, uiRoot != null ? uiRoot : transform);
             }
 
-            _progress = new LevelProgressService();
+            var profileService = new PlayerProfileService();
+            profileService.Load();
+            _progress = new LevelProgressService(profileService);
             _progress.Load();
 
             titleTransform.localScale = Vector3.zero;
@@ -112,7 +117,13 @@ namespace UI.Menus
                 rankingPanel.SetActive(true);
             });
 
-            storeButton.onClick.AddListener(OpenStorePanel);
+            if (storeButton)
+            {
+                // O layout vertical dos botões recentraliza os outros quando a Loja some.
+                storeButton.gameObject.SetActive(storeAvailable);
+                if (storeAvailable)
+                    storeButton.onClick.AddListener(OpenStorePanel);
+            }
             profileButton.onClick.AddListener(OpenProfilePanel);
             dailyMissionsButton.onClick.AddListener(OpenDailyPanel);
         
@@ -137,7 +148,9 @@ namespace UI.Menus
 
         public void OnClickPlay()
         {
-            var idx = Mathf.Max(_progress.CurrentIndex, _progress.UnlockedMaxIndex);
+            // A fase atual já avança na vitória; usar o máximo com a maior liberada
+            // desfazia o "Jogar de novo" do fim do jogo.
+            var idx = _progress.CurrentIndex;
 
             _progress.SetCurrentIndex(idx);
             _progress.Save();

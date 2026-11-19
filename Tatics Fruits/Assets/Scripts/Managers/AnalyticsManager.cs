@@ -35,18 +35,40 @@ namespace Managers
             try
             {
                 await UnityServices.InitializeAsync();
-                GiveConsent();
-                _isInitialized = true;
             }
             catch (Exception e)
             {
                 Debug.LogError($"[Analytics] Failed to initialize Unity Services: {e.Message}");
+                return;
             }
+
+            // Coleta só começa depois dos termos + consentimento (ver ConsentManager).
+            Core.Privacy.ConsentManager.WhenResolved(() =>
+            {
+                if (!Core.Privacy.ConsentManager.CanCollectAnalytics)
+                {
+                    Debug.Log("[Analytics] Sem consentimento para analytics. Coleta desligada.");
+                    return;
+                }
+
+                AnalyticsService.Instance.StartDataCollection();
+                _isInitialized = true;
+            });
         }
 
-        private void GiveConsent()
+        /// <summary>Para a coleta e pede ao Unity que apague os dados deste jogador (exclusão de conta).</summary>
+        public void StopAndRequestDataDeletion()
         {
-            AnalyticsService.Instance.StartDataCollection();
+            _isInitialized = false;
+            try
+            {
+                if (UnityServices.State == ServicesInitializationState.Initialized)
+                    AnalyticsService.Instance.RequestDataDeletion();
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning($"[Analytics] RequestDataDeletion falhou: {e.Message}");
+            }
         }
 
         public void TrackLevelStarted(int levelNumber, string levelName = "")

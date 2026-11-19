@@ -38,7 +38,10 @@ public class SettingsMenu : MonoBehaviour
     [Header("Other Actions")]
     [SerializeField] private Button creditsButton;
     [SerializeField] private Button deleteAccountButton;
+    [Tooltip("Abre a Política de Privacidade (StoreConfig.PrivacyPolicyUrl).")]
     [SerializeField] private Button termsButton;
+    [Tooltip("Opcional. Reabre o formulário de consentimento de anúncios (UMP). Só aparece onde a lei exige (EEE/Reino Unido).")]
+    [SerializeField] private Button privacyOptionsButton;
 
     [Header("Popups")]
     [SerializeField] private CreditsPopup creditsPopupPrefab;
@@ -92,7 +95,11 @@ public class SettingsMenu : MonoBehaviour
         
         HookButtonWithFeedback(deleteAccountButton, OnDeleteAccountClicked);
         HookButtonWithFeedback(creditsButton, OnCreditsButtonClicked);
-        HookButtonWithFeedback(termsButton,  "Load Data(futuro)");
+        DisableLeftoverPersistentCalls(termsButton);
+        HookButtonWithFeedback(termsButton, OnTermsClicked);
+        HookButtonWithFeedback(privacyOptionsButton, () => Core.Privacy.ConsentManager.ShowPrivacyOptions(RefreshPrivacyOptionsButton));
+        if (privacyOptionsButton) privacyOptionsButton.gameObject.SetActive(false);
+        Core.Privacy.ConsentManager.WhenResolved(RefreshPrivacyOptionsButton);
         
         audioToggle.isOn = _settings.musicOn;
         sfxToggle.isOn   = _settings.sfxOn;
@@ -147,6 +154,22 @@ public class SettingsMenu : MonoBehaviour
 
             Debug.Log(debugMsg);
         });
+    }
+
+    /// <summary>
+    /// O botão de Termos tem, na cena, um clique antigo para DataSaver.LoadData: abrir os
+    /// Termos recarregava o save da nuvem. Desligado aqui; pode ser apagado no Inspector.
+    /// </summary>
+    private static void DisableLeftoverPersistentCalls(Button btn)
+    {
+        if (!btn) return;
+        var evt = btn.onClick;
+        for (var i = 0; i < evt.GetPersistentEventCount(); i++)
+        {
+            if (evt.GetPersistentMethodName(i) != "LoadData") continue;
+            evt.SetPersistentListenerState(i, UnityEngine.Events.UnityEventCallState.Off);
+            Debug.Log($"[SettingsMenu] Clique antigo LoadData desligado em {btn.name}.");
+        }
     }
 
     private void HookButtonWithFeedback(Button btn, System.Action onClick)
@@ -315,6 +338,28 @@ public class SettingsMenu : MonoBehaviour
         _currentCreditsPopup.Show();
     }
     
+    private void OnTermsClicked()
+    {
+        // Em regiões reguladas, sem botão próprio de "Opções de privacidade",
+        // o botão de termos abre o formulário do Google (que também traz o link da política).
+        if (privacyOptionsButton == null && Core.Privacy.ConsentManager.IsPrivacyOptionsRequired)
+        {
+            Core.Privacy.ConsentManager.ShowPrivacyOptions();
+            return;
+        }
+
+        if (Core.StoreConfig.HasUrl(Core.StoreConfig.PrivacyPolicyUrl))
+            Application.OpenURL(Core.StoreConfig.PrivacyPolicyUrl);
+        else
+            Debug.LogWarning("[SettingsMenu] StoreConfig.PrivacyPolicyUrl não configurada.");
+    }
+
+    private void RefreshPrivacyOptionsButton()
+    {
+        if (this == null || privacyOptionsButton == null) return;
+        privacyOptionsButton.gameObject.SetActive(Core.Privacy.ConsentManager.IsPrivacyOptionsRequired);
+    }
+
     private void OnDeleteAccountClicked()
     {
         if(!deleteAccountView)
