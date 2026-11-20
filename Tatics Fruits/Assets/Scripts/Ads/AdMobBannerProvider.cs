@@ -34,7 +34,10 @@ namespace Ads
 
             Debug.Log($"[AdMobBannerProvider] Creating and loading banner ad with ID: {_adUnitId}");
 
-            _bannerView = new BannerView(_adUnitId, AdSize.Banner, AdPosition.Bottom);
+            // Banner adaptativo (v2.2): ocupa a largura da tela, com a altura que o Google
+            // escolhe para o aparelho. Rende mais que o 320x50 fixo e usa a mesma unidade.
+            var adaptiveSize = AdSize.GetCurrentOrientationAnchoredAdaptiveBannerAdSizeWithWidth(AdSize.FullWidth);
+            _bannerView = new BannerView(_adUnitId, adaptiveSize, AdPosition.Bottom);
 
             RegisterEventHandlers();
 

@@ -14,10 +14,11 @@ namespace Ads
     /// </summary>
     public class InterstitialAdManager : MonoBehaviour
     {
-        private const int MatchesBetweenAds = 3;
+        // Cada fase dura ~1 min: 2 partidas + 60 s dá um anúncio a cada 2-3 minutos de jogo.
+        private const int MatchesBetweenAds = 2;
         private const int TestModeMatches = 1;
         private const int FirstLevelWithAds = 4;
-        private const float MinSecondsBetweenAds = 90f;
+        private const float MinSecondsBetweenAds = 60f;
         private const float ShowFailSafeSeconds = 60f;
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
