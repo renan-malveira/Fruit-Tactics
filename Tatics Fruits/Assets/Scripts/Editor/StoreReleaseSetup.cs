@@ -29,7 +29,9 @@ namespace Editor
         // Valores desta versão
         // -----------------------------------------------------------------
         private const string VersionName = "2.2";
-        private const int MinAndroidVersionCode = 43;   // último enviado: 42
+        // 43 foi enviado em 20/11/2026 e barrado na revisão (tela em retrato obrigatória).
+        // O Play não aceita repetir uma versionCode já enviada.
+        private const int MinAndroidVersionCode = 44;
         private const int AndroidTargetApi = 36;        // exigência do Google Play para atualizações
         private const string IosBundleId = "com.Suricatus.TacticsFruits"; // precisa ser igual ao registro no App Store Connect
         private const string IosTeamId = "";            // Apple Developer > Membership > Team ID
@@ -133,7 +135,11 @@ namespace Editor
             else if (target < AndroidTargetApi) errors.Add($"Android: targetSdk {target} < {AndroidTargetApi}.");
 
             if (PlayerSettings.Android.bundleVersionCode < MinAndroidVersionCode)
-                errors.Add($"Android: versionCode {PlayerSettings.Android.bundleVersionCode} precisa ser > 42.");
+                errors.Add($"Android: versionCode {PlayerSettings.Android.bundleVersionCode} precisa ser >= {MinAndroidVersionCode} (rode \"1. Aplicar\").");
+
+            if (IsPortraitOnly() && !HasOptionalPortraitFeature())
+                errors.Add("Android: sem <uses-feature android.hardware.screen.portrait required=\"false\">, " +
+                           "o Play trata a tela em retrato como obrigatória e barra o envio.");
 
             if (!File.Exists(GoogleServicesJsonPath))
                 errors.Add("Android: falta google-services.json.");
@@ -155,6 +161,40 @@ namespace Editor
             var keystore = PlayerSettings.Android.keystoreName ?? string.Empty;
             if (keystore.Contains("{inproject}") || keystore.StartsWith("Assets") || !Path.IsPathRooted(keystore))
                 warnings.Add("Android: o keystore está dentro do projeto. Mantenha-o fora do Git.");
+        }
+
+        private static bool IsPortraitOnly()
+        {
+            var orientation = PlayerSettings.defaultInterfaceOrientation;
+            if (orientation == UIOrientation.Portrait || orientation == UIOrientation.PortraitUpsideDown)
+                return true;
+
+            return orientation == UIOrientation.AutoRotation &&
+                   !PlayerSettings.allowedAutorotateToLandscapeLeft &&
+                   !PlayerSettings.allowedAutorotateToLandscapeRight;
+        }
+
+        /// <summary>Algum manifesto em Plugins/Android declara a tela em retrato como opcional?</summary>
+        private static bool HasOptionalPortraitFeature()
+        {
+            if (!Directory.Exists(AndroidPluginsRoot))
+                return false;
+
+            foreach (var path in Directory.GetFiles(AndroidPluginsRoot, "AndroidManifest.xml", SearchOption.AllDirectories))
+            {
+                var xml = File.ReadAllText(path);
+                var at = xml.IndexOf("android.hardware.screen.portrait", StringComparison.Ordinal);
+                if (at < 0) continue;
+
+                var start = xml.LastIndexOf("<uses-feature", at, StringComparison.Ordinal);
+                var end = xml.IndexOf("/>", at, StringComparison.Ordinal);
+                if (start < 0 || end < 0) continue;
+
+                if (xml.Substring(start, end - start).Contains("android:required=\"false\""))
+                    return true;
+            }
+
+            return false;
         }
 
         private static void ValidateIos(List<string> errors, List<string> warnings)

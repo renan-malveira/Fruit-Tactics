@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Fruit Tactics: hardware features.
+     The activity is locked to portrait (android:screenOrientation="portrait"), so Google Play
+     implies android.hardware.screen.portrait as REQUIRED and hides the app from devices without
+     that feature (Chromebooks, Google Play Games on PC, Android XR, some tablets).
+     Declaring it optional keeps the game in portrait but available everywhere. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.suricatus.fruittactics.hardwarefeatures">
+
+    <uses-feature android:name="android.hardware.screen.portrait" android:required="false" />
+</manifest>
