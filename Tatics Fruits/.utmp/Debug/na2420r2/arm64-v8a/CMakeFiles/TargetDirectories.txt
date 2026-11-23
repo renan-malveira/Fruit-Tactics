@@ -1,8 +1,0 @@
-/Users/r.rodrigues/Documents/GitHub/Tatics-fruits/Tatics Fruits/.utmp/Debug/na2420r2/arm64-v8a/CMakeFiles/edit_cache.dir
-/Users/r.rodrigues/Documents/GitHub/Tatics-fruits/Tatics Fruits/.utmp/Debug/na2420r2/arm64-v8a/CMakeFiles/rebuild_cache.dir
-/Users/r.rodrigues/Documents/GitHub/Tatics-fruits/Tatics Fruits/.utmp/Debug/na2420r2/arm64-v8a/GameActivity/CMakeFiles/game.dir
-/Users/r.rodrigues/Documents/GitHub/Tatics-fruits/Tatics Fruits/.utmp/Debug/na2420r2/arm64-v8a/GameActivity/CMakeFiles/edit_cache.dir
-/Users/r.rodrigues/Documents/GitHub/Tatics-fruits/Tatics Fruits/.utmp/Debug/na2420r2/arm64-v8a/GameActivity/CMakeFiles/rebuild_cache.dir
-/Users/r.rodrigues/Documents/GitHub/Tatics-fruits/Tatics Fruits/.utmp/Debug/na2420r2/arm64-v8a/FramePacing/CMakeFiles/swappywrapper.dir
-/Users/r.rodrigues/Documents/GitHub/Tatics-fruits/Tatics Fruits/.utmp/Debug/na2420r2/arm64-v8a/FramePacing/CMakeFiles/edit_cache.dir
-/Users/r.rodrigues/Documents/GitHub/Tatics-fruits/Tatics Fruits/.utmp/Debug/na2420r2/arm64-v8a/FramePacing/CMakeFiles/rebuild_cache.dir

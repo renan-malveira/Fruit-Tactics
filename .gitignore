@@ -85,3 +85,6 @@ crashlytics-build.properties
 mono_crash.*.json
 *_BurstDebugInformation_DoNotShip/
 *_BackUpThisFolder_ButDontShipItWithYourGame/
+
+# Temporários da compilação nativa do Android (CMake/GameActivity), recriados a cada build
+.utmp/
