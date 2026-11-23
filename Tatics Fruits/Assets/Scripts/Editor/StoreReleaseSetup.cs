@@ -33,8 +33,16 @@ namespace Editor
         // O Play não aceita repetir uma versionCode já enviada.
         private const int MinAndroidVersionCode = 44;
         private const int AndroidTargetApi = 36;        // exigência do Google Play para atualizações
-        private const string IosBundleId = "com.Suricatus.TacticsFruits"; // precisa ser igual ao registro no App Store Connect
-        private const string IosTeamId = "";            // Apple Developer > Membership > Team ID
+        // App já publicado na App Store (id6761233443, versão 1.0 de 31/03/2026). Outro bundle ID
+        // criaria um app novo em vez de atualizar este.
+        private const string IosBundleId = "com.suricatusgames.fruittactics.mobile";
+        // Ícone do iOS: 1024x1024 sem transparência (a App Store recusa canal alfa no ícone grande).
+        private const string IosIconPath = "Assets/Sprite/AppIcon_iOS.png";
+        // Vazio: o time é escolhido no Xcode (Signing & Capabilities > Team).
+        // Preencher (Apple Developer > Membership > Team ID) dispensa esse passo.
+        private const string IosTeamId = "";
+        // App iOS no AdMob, ligado ao id6761233443 (o do Android é ~3807758387).
+        private const string IosAdMobAppId = "ca-app-pub-8609532543875876~6844724801";
 
         private const string AttDescription =
             "Usamos essa permissão para mostrar anúncios mais relevantes e manter o Fruit Tactics gratuito.";
@@ -81,6 +89,24 @@ namespace Editor
             PlayerSettings.iOS.appleEnableAutomaticSigning = true;
             if (!string.IsNullOrEmpty(IosTeamId))
                 PlayerSettings.iOS.appleDeveloperTeamID = IosTeamId;
+
+            // A 1.0 saiu para iPhone e iPad; uma atualização não pode deixar de suportar iPad.
+            PlayerSettings.iOS.targetDevice = iOSTargetDevice.iPhoneAndiPad;
+            log.Add("iOS: iPhone + iPad");
+
+            // Sem pedido de notificação na abertura: ele disputava a tela com o ATT, que às vezes
+            // nem aparecia. A permissão é pedida depois dos termos, do consentimento e do ATT.
+            Unity.Notifications.NotificationSettings.iOSSettings.RequestAuthorizationOnAppLaunch = false;
+            log.Add("iOS: notificações não pedem permissão na abertura");
+
+#if UNITY_IOS
+            ApplyIosIcons(log);
+#else
+            log.Add("iOS: ícones só são aplicados com a plataforma iOS ativa (rode de novo no Mac)");
+#endif
+
+            if (SetAdMobString("adMobIOSAppId", IosAdMobAppId))
+                log.Add($"iOS: App ID do AdMob {IosAdMobAppId}");
 
             if (SetAdMobString("userTrackingUsageDescription", AttDescription))
                 log.Add("iOS: texto do ATT (NSUserTrackingUsageDescription) definido");
@@ -200,33 +226,49 @@ namespace Editor
         private static void ValidateIos(List<string> errors, List<string> warnings)
         {
             var iosId = PlayerSettings.GetApplicationIdentifier(NamedBuildTarget.iOS);
-            if (string.IsNullOrEmpty(iosId) || iosId.Contains("DefaultCompany"))
-                errors.Add("iOS: bundle ID não definido (rode \"1. Aplicar\").");
+            if (iosId != IosBundleId)
+                errors.Add($"iOS: bundle ID {iosId}; o app da App Store é {IosBundleId} (rode \"1. Aplicar\").");
+
+            if (PlayerSettings.iOS.targetDevice != iOSTargetDevice.iPhoneAndiPad)
+                errors.Add("iOS: a 1.0 suporta iPad; a atualização precisa ser iPhone + iPad (rode \"1. Aplicar\").");
+
+            if (Unity.Notifications.NotificationSettings.iOSSettings.RequestAuthorizationOnAppLaunch)
+                errors.Add("iOS: notificações pedem permissão na abertura e atrapalham o pedido do ATT (rode \"1. Aplicar\").");
+
+#if UNITY_IOS
+            if (!HasIosMarketingIcon())
+                errors.Add("iOS: falta o ícone da App Store (1024). Rode \"1. Aplicar\" com a plataforma iOS ativa.");
+#endif
 
             if (string.IsNullOrEmpty(PlayerSettings.iOS.appleDeveloperTeamID))
-                errors.Add("iOS: Team ID da Apple vazio (StoreReleaseSetup.IosTeamId).");
+                warnings.Add("iOS: Team ID vazio. No Xcode, escolha o time em Signing & Capabilities antes do Archive.");
 
-            if (!AssetDatabase.FindAssets("GoogleService-Info").Select(AssetDatabase.GUIDToAssetPath)
-                    .Any(p => p.EndsWith("GoogleService-Info.plist")))
-                errors.Add("iOS: falta GoogleService-Info.plist (criar app iOS no Firebase e colocar em Assets/).");
+            var plist = AssetDatabase.FindAssets("GoogleService-Info").Select(AssetDatabase.GUIDToAssetPath)
+                .FirstOrDefault(p => p.EndsWith("GoogleService-Info.plist"));
+            if (plist == null)
+                errors.Add("iOS: falta GoogleService-Info.plist (app iOS do Firebase, em Assets/).");
+            else if (!File.ReadAllText(plist).Contains($"<string>{IosBundleId}</string>"))
+                errors.Add($"iOS: {plist} não é do bundle {IosBundleId}. Baixe o do app iOS no Firebase.");
 
             var androidAppId = GetAdMobString("adMobAndroidAppId");
             var iosAppId = GetAdMobString("adMobIOSAppId");
             if (string.IsNullOrEmpty(iosAppId))
-                errors.Add("iOS: App ID do AdMob vazio (GoogleMobileAdsSettings).");
+                errors.Add("iOS: App ID do AdMob vazio (rode \"1. Aplicar\").");
             else if (iosAppId == androidAppId)
-                errors.Add("iOS: App ID do AdMob é o mesmo do Android. Crie o app iOS no AdMob.");
+                errors.Add("iOS: App ID do AdMob é o mesmo do Android (rode \"1. Aplicar\").");
+            else if (iosAppId != IosAdMobAppId)
+                errors.Add($"iOS: App ID do AdMob {iosAppId}; o do app iOS é {IosAdMobAppId} (rode \"1. Aplicar\").");
 
             if (string.IsNullOrEmpty(GetAdMobString("userTrackingUsageDescription")))
                 errors.Add("iOS: texto do ATT vazio (rode \"1. Aplicar\").");
 
             if (!StoreConfig.IsUsableAdUnit(StoreConfig.IosInterstitialUnitId) ||
                 StoreConfig.IosInterstitialUnitId.StartsWith(StoreConfig.GoogleTestAdPrefix))
-                warnings.Add("iOS: sem unidade de intersticial (StoreConfig). O iOS vai sair sem esse anúncio.");
+                errors.Add("iOS: unidade de intersticial vazia ou de teste (StoreConfig).");
 
             if (!StoreConfig.IsUsableAdUnit(StoreConfig.IosBannerUnitId) ||
                 StoreConfig.IosBannerUnitId.StartsWith(StoreConfig.GoogleTestAdPrefix))
-                warnings.Add("iOS: sem unidade de banner (StoreConfig). O iOS vai sair sem banner.");
+                errors.Add("iOS: unidade de banner vazia ou de teste (StoreConfig).");
 
             if (!int.TryParse(PlayerSettings.iOS.buildNumber, out var build) || build < 1)
                 errors.Add("iOS: build number precisa ser >= 1.");
@@ -275,6 +317,53 @@ namespace Editor
             plist.WriteToFile(plistPath);
 #endif
         }
+
+#if UNITY_IOS
+        private static readonly PlatformIconKind[] IosIconKinds =
+        {
+            UnityEditor.iOS.iOSPlatformIconKind.Application,
+            UnityEditor.iOS.iOSPlatformIconKind.Spotlight,
+            UnityEditor.iOS.iOSPlatformIconKind.Settings,
+            UnityEditor.iOS.iOSPlatformIconKind.Notification,
+            UnityEditor.iOS.iOSPlatformIconKind.Marketing,
+        };
+
+        /// <summary>Usa AppIcon_iOS.png (sem transparência) em todos os tamanhos de ícone do iOS.</summary>
+        private static void ApplyIosIcons(List<string> log)
+        {
+            if (AssetImporter.GetAtPath(IosIconPath) is not TextureImporter importer)
+            {
+                log.Add($"iOS: ícone não encontrado em {IosIconPath}");
+                return;
+            }
+
+            importer.textureType = TextureImporterType.Default;
+            importer.alphaSource = TextureImporterAlphaSource.None;
+            importer.alphaIsTransparency = false;
+            importer.mipmapEnabled = false;
+            importer.npotScale = TextureImporterNPOTScale.None;
+            importer.maxTextureSize = 1024;
+            importer.textureCompression = TextureImporterCompression.Uncompressed;
+            importer.SaveAndReimport();
+
+            var texture = AssetDatabase.LoadAssetAtPath<Texture2D>(IosIconPath);
+            foreach (var kind in IosIconKinds)
+            {
+                var icons = PlayerSettings.GetPlatformIcons(NamedBuildTarget.iOS, kind);
+                foreach (var icon in icons)
+                    icon.SetTexture(texture);
+                PlayerSettings.SetPlatformIcons(NamedBuildTarget.iOS, kind, icons);
+            }
+
+            log.Add("iOS: ícones (app, Spotlight, Ajustes, notificação e App Store) = AppIcon_iOS.png");
+        }
+
+        private static bool HasIosMarketingIcon()
+        {
+            var icons = PlayerSettings.GetPlatformIcons(NamedBuildTarget.iOS, UnityEditor.iOS.iOSPlatformIconKind.Marketing);
+            return icons.Length > 0 && icons.All(i => i.GetTexture() != null);
+        }
+#endif
 
         // -----------------------------------------------------------------
         // Auxiliares

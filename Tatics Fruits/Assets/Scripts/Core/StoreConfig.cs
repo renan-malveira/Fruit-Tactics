@@ -30,10 +30,10 @@ namespace Core
         public const string AndroidInterstitialUnitId = "ca-app-pub-8609532543875876/3409474969";
         public const string AndroidBannerUnitId       = "ca-app-pub-8609532543875876/5682573689";
 
-        // Criar o app iOS no AdMob e colar aqui as unidades próprias do iOS.
-        // Enquanto estiverem vazias, o iOS não carrega anúncios (em vez de usar IDs de teste ou do Android).
-        public const string IosInterstitialUnitId = "";
-        public const string IosBannerUnitId       = "";
+        // App iOS no AdMob: ca-app-pub-8609532543875876~6844724801 (criado em 23/11/2026, ligado ao id6761233443).
+        // Se alguma ficar vazia, o iOS não carrega aquele anúncio (em vez de usar IDs de teste ou do Android).
+        public const string IosInterstitialUnitId = "ca-app-pub-8609532543875876/3859468812";
+        public const string IosBannerUnitId       = "ca-app-pub-8609532543875876/5932852405";
 
         public const string GoogleTestAdPrefix = "ca-app-pub-3940256099942544";
 

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CLIENT_ID</key>
+	<string>659488806200-e2vtcnc798ruloukbbbpvsakr17kt7tt.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.659488806200-e2vtcnc798ruloukbbbpvsakr17kt7tt</string>
+	<key>ANDROID_CLIENT_ID</key>
+	<string>659488806200-c12o6kogh9e3tn0lvvt5dqhg8e8hl4vj.apps.googleusercontent.com</string>
+	<key>API_KEY</key>
+	<string>AIzaSyCMK-G90P5use7vybGZL_hqrZM9FlGjdho</string>
+	<key>GCM_SENDER_ID</key>
+	<string>659488806200</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.suricatusgames.fruittactics.mobile</string>
+	<key>PROJECT_ID</key>
+	<string>fruit-tactics</string>
+	<key>STORAGE_BUCKET</key>
+	<string>fruit-tactics.firebasestorage.app</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:659488806200:ios:7ea9138888b68479b29dcd</string>
+	<key>DATABASE_URL</key>
+	<string>https://fruit-tactics-default-rtdb.firebaseio.com</string>
+</dict>
+</plist>
