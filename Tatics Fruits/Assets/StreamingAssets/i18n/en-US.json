@@ -91,7 +91,7 @@
   "swap_one_card": "Swap one card",
 
   "pre_round_play": "Ready?",
-  "pre_round_objective": "Score <b>{0}</b> points before time runs out! You start with <b>{1}</b> seconds.",
+  "pre_round_objective": "Score <b>{2}</b> points to pass and <b>{0}</b> for 3 stars! You start with <b>{1}</b> seconds.",
 
   "countdown_3": "READY",
   "countdown_2": "SET",
@@ -105,6 +105,7 @@
   "combo_legendary": "Legendary!",
 
   "defeat_title_timeup": "Time's up! Not this time.",
+  "defeat_title_out_of_cards": "Out of cards! Not this time.",
   "defeat_score_line": "You scored: {0} points.",
 
   "victory_title": "Victory!",

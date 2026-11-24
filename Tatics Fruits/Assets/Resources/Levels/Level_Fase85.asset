@@ -15,7 +15,7 @@ MonoBehaviour:
   levelId: fase_85
   displayName: Fase 85
   description: 
-  targetScore: 1600
+  targetScore: 1050
   initialTimeSeconds: 35
   handSize: 9
   deckSize: 64

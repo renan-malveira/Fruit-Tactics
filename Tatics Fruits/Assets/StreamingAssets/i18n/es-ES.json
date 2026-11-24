@@ -91,7 +91,7 @@
   "swap_one_card": "Cambiar una carta",
 
   "pre_round_play": "¿Listo?",
-  "pre_round_objective": "¡Consigue <b>{0}</b> puntos antes de que se acabe el tiempo! Empiezas con <b>{1}</b> segundos.",
+  "pre_round_objective": "¡Consigue <b>{2}</b> puntos para pasar y <b>{0}</b> para las 3 estrellas! Empiezas con <b>{1}</b> segundos.",
 
   "countdown_3": "PREPARAR",
   "countdown_2": "LISTOS",
@@ -105,6 +105,7 @@
   "combo_legendary": "Lenda!",
 
   "defeat_title_timeup": "¡Se acabó el tiempo! No fue esta vez.",
+  "defeat_title_out_of_cards": "¡Se acabaron las cartas! No fue esta vez.",
   "defeat_score_line": "Hiciste: {0} puntos.",
 
   "victory_title": "¡Victoria!",

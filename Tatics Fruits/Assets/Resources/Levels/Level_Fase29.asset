@@ -15,7 +15,7 @@ MonoBehaviour:
   levelId: fase_29
   displayName: Fase 29
   description: "Fa\xE7a {0} pontos em {0} segundos!"
-  targetScore: 1150
+  targetScore: 1020
   initialTimeSeconds: 60
   handSize: 6
   deckSize: 60
@@ -35,6 +35,6 @@ MonoBehaviour:
   - 0
   - 0
   parTimeSeconds: 70
-  star1Threshold: 0.25
-  star2Threshold: 0.5
+  star1Threshold: 0.33
+  star2Threshold: 0.66
   star3Threshold: 1

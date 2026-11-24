@@ -125,6 +125,7 @@ namespace Gameplay.Controllers
             {
                 TryDrawReplacement();
                 TryDrawReplacement();
+                EndIfOutOfCards();
             }
 
             _selectedCard = null;
@@ -146,7 +147,25 @@ namespace Gameplay.Controllers
 
             TryDrawReplacement();
             TryDrawReplacement();
+            EndIfOutOfCards();
             return true;
+        }
+
+        /// <summary>
+        /// Sem cartas na mão, no baralho e no descarte não há mais par possível.
+        /// Antes a barra parava e o jogador esperava o relógio (que cresce a cada par) zerar.
+        /// </summary>
+        private void EndIfOutOfCards()
+        {
+            if (_fsm.Current != DefaultNamespace.New_GameplayCore.GameState.Playing)
+                return;
+
+            var canRefill = _cfg.allowEmptyDeckRefill && _deck.DiscardCount > 0;
+            if (_hand.Cards.Count > 0 || _deck.DeckCount > 0 || canRefill)
+                return;
+
+            _fsm.SetState(DefaultNamespace.New_GameplayCore.GameState.Results);
+            OnLevelEnded?.Invoke(EndCause.OutOfCards);
         }
 
         public void ReportInvalidPair()

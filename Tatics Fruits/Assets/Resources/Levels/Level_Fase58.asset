@@ -15,7 +15,7 @@ MonoBehaviour:
   levelId: fase_58
   displayName: Fase 58
   description: 
-  targetScore: 1390
+  targetScore: 1130
   initialTimeSeconds: 50
   handSize: 8
   deckSize: 64

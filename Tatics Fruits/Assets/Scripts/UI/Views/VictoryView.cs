@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using Core.Services;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
@@ -45,6 +46,7 @@ namespace UI.Views
         [SerializeField] private Button menuButton;
 
         private VictoryPresenter _presenter;
+        private Image _basket;
 
         private const float PanelStartAlpha = 0f;
         private const float PanelEndAlpha   = 1f;
@@ -97,9 +99,48 @@ namespace UI.Views
 
         private void AssignStarSprites(int starsEarned)
         {
+            _basket = PickBasket(starsEarned);
+            if (_basket != null)
+                return;
+
             AssignSprite(star1, starsEarned >= 1);
             AssignSprite(star2, starsEarned >= 2);
             AssignSprite(star3, starsEarned >= 3);
+        }
+
+        /// <summary>
+        /// O painel tem uma cesta para cada quantidade (Star 1, Star 2 e Star 3, uma em cima
+        /// da outra) e os campos star1..3 apontam todos para a mesma imagem. Antes essa imagem
+        /// só acendia com 3 estrelas: com 1 ou 2 aparecia a cesta apagada (silhueta preta).
+        /// Agora mostra a cesta da quantidade ganha.
+        /// </summary>
+        private Image PickBasket(int starsEarned)
+        {
+            if (starsEarned <= 0 || !star3 || star1 != star3 || star2 != star3)
+                return null;
+
+            var panel = star3.transform.parent;
+            if (!panel)
+                return null;
+
+            var baskets = new List<Image>(3);
+            for (var i = 0; i < panel.childCount && baskets.Count < 3; i++)
+            {
+                var img = panel.GetChild(i).GetComponent<Image>();
+                if (img) baskets.Add(img);
+            }
+
+            if (baskets.Count < 3)
+                return null;
+
+            var shown = Mathf.Min(starsEarned, 3) - 1;
+            for (var i = 0; i < baskets.Count; i++)
+            {
+                baskets[i].gameObject.SetActive(i == shown);
+                baskets[i].enabled = false; // aparece na animação
+            }
+
+            return baskets[shown];
         }
 
         private void AssignSprite(Image img, bool on)
@@ -115,13 +156,15 @@ namespace UI.Views
             yield return StartCoroutine(CountScore(model.totalScore));
             yield return new WaitForSeconds(starRevealDelay);
 
-            var images = new[] { star1, star2, star3 };
-            var earned = new[]
-            {
-                model.starsEarned >= 1,
-                model.starsEarned >= 2,
-                model.starsEarned >= 3
-            };
+            var images = _basket != null ? new[] { _basket } : new[] { star1, star2, star3 };
+            var earned = _basket != null
+                ? new[] { true }
+                : new[]
+                {
+                    model.starsEarned >= 1,
+                    model.starsEarned >= 2,
+                    model.starsEarned >= 3
+                };
 
             if (starAnimator != null)
                 starAnimator.RevealSequence(images, earned, starStaggerDelay,

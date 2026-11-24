@@ -15,7 +15,7 @@ MonoBehaviour:
   levelId: fase_42
   displayName: Fase 42
   description: 
-  targetScore: 1260
+  targetScore: 1070
   initialTimeSeconds: 75
   handSize: 7
   deckSize: 60

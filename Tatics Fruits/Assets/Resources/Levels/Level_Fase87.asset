@@ -15,7 +15,7 @@ MonoBehaviour:
   levelId: fase_87
   displayName: Fase 87
   description: 
-  targetScore: 1620
+  targetScore: 1020
   initialTimeSeconds: 35
   handSize: 10
   deckSize: 64

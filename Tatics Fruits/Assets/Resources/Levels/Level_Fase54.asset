@@ -15,7 +15,7 @@ MonoBehaviour:
   levelId: fase_54
   displayName: Fase 54
   description: 
-  targetScore: 1350
+  targetScore: 1120
   initialTimeSeconds: 55
   handSize: 8
   deckSize: 64

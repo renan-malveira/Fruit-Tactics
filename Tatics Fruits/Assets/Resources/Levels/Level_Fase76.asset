@@ -15,7 +15,7 @@ MonoBehaviour:
   levelId: fase_76
   displayName: Fase 76
   description: 
-  targetScore: 1530
+  targetScore: 1110
   initialTimeSeconds: 42
   handSize: 9
   deckSize: 64

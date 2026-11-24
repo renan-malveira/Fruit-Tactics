@@ -15,7 +15,7 @@ MonoBehaviour:
   levelId: fase_35
   displayName: Fase 35
   description: 
-  targetScore: 1200
+  targetScore: 990
   initialTimeSeconds: 85
   handSize: 6
   deckSize: 60

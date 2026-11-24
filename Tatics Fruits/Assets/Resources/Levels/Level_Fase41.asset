@@ -15,7 +15,7 @@ MonoBehaviour:
   levelId: fase_41
   displayName: Fase 41
   description: 
-  targetScore: 1250
+  targetScore: 1110
   initialTimeSeconds: 75
   handSize: 7
   deckSize: 60

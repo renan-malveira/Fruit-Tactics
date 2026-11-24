@@ -15,7 +15,7 @@ MonoBehaviour:
   levelId: fase_22
   displayName: Fase 22
   description: "Fa\xE7a {0} pontos em {0} segundos!"
-  targetScore: 1090
+  targetScore: 1070
   initialTimeSeconds: 60
   handSize: 6
   deckSize: 60
@@ -35,6 +35,6 @@ MonoBehaviour:
   - 0
   - 0
   parTimeSeconds: 65
-  star1Threshold: 0.25
-  star2Threshold: 0.5
+  star1Threshold: 0.33
+  star2Threshold: 0.66
   star3Threshold: 1

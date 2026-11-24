@@ -13,6 +13,12 @@ namespace New_GameplayCore
         /// <summary>Toque sem arrastar (devolve à mão a carta que espera o par).</summary>
         public event Action<CardDragHandler> Tapped;
 
+        /// <summary>Fim do arraste, já com a carta no lugar final (área de jogo ou de volta à mão).</summary>
+        public event Action<CardDragHandler> DragEnded;
+
+        /// <summary>A carta está na mão do jogador agora (o dedo ainda não soltou).</summary>
+        public bool IsDragging { get; private set; }
+
         [Header("Refs")]
         [SerializeField] private Canvas canvas;
         [SerializeField] private RectTransform dragRoot;
@@ -35,8 +41,14 @@ namespace New_GameplayCore
             if (canvas == null) canvas = GetComponentInParent<Canvas>();
         }
 
+        private void OnDisable()
+        {
+            IsDragging = false;
+        }
+
         public void OnBeginDrag(PointerEventData eventData)
         {
+            IsDragging = true;
             _accepted = false;
             _acceptedParent = null;
 
@@ -59,6 +71,7 @@ namespace New_GameplayCore
 
         public void OnEndDrag(PointerEventData eventData)
         {
+            IsDragging = false;
             _cg.blocksRaycasts = true;
             _cg.alpha = 1f;
 
@@ -71,13 +84,15 @@ namespace New_GameplayCore
                 rt.anchorMax = new Vector2(0.5f, 0.5f);
                 rt.pivot     = new Vector2(0.5f, 0.5f);
                 rt.DOAnchorPos(Vector2.zero, 0.15f).SetEase(Ease.OutCubic);
-
-                return;
             }
-            
-            transform.SetParent(_originParent, worldPositionStays: false);
-            transform.SetSiblingIndex(_originSibling);
-            _rt.anchoredPosition = _originAnchoredPos;
+            else
+            {
+                transform.SetParent(_originParent, worldPositionStays: false);
+                transform.SetSiblingIndex(_originSibling);
+                _rt.anchoredPosition = _originAnchoredPos;
+            }
+
+            DragEnded?.Invoke(this);
         }
         
         public void OnPointerClick(PointerEventData eventData)

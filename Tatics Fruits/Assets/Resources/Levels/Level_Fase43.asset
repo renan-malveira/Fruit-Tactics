@@ -15,7 +15,7 @@ MonoBehaviour:
   levelId: fase_43
   displayName: Fase 43
   description: 
-  targetScore: 1260
+  targetScore: 1060
   initialTimeSeconds: 75
   handSize: 7
   deckSize: 60

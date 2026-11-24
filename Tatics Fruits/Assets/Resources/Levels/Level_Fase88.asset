@@ -15,7 +15,7 @@ MonoBehaviour:
   levelId: fase_88
   displayName: Fase 88
   description: 
-  targetScore: 1630
+  targetScore: 1010
   initialTimeSeconds: 33
   handSize: 10
   deckSize: 64

@@ -15,6 +15,8 @@ namespace Core.Services
         public int bestBefore;
         public bool newRecord;
         public int timeLeftSeconds;
+        /// <summary>A partida acabou porque não sobrou carta para formar par (não foi o tempo).</summary>
+        public bool outOfCards;
     }
 
     public class DefeatPresenter

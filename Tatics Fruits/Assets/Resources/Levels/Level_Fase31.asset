@@ -15,7 +15,7 @@ MonoBehaviour:
   levelId: fase_31
   displayName: Fase 31
   description: 
-  targetScore: 1170
+  targetScore: 1010
   initialTimeSeconds: 90
   handSize: 6
   deckSize: 60

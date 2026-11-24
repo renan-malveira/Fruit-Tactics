@@ -33,15 +33,14 @@ namespace Core.ScriptableObjects
         public float[] comboMultipliers  = { 1.0f, 1.2f, 1.5f, 2.0f };
 
         [Header("Estrelas (v2.2)")]
-        [Tooltip("1 estrela: bater a meta. 2 estrelas: bater a meta em até este tempo (segundos de partida). " +
-                 "3 estrelas: as duas coisas sem errar nenhum par. Zero usa a regra antiga de 25% do tempo inicial sobrando.")]
+        [Tooltip("Não usado: as estrelas vêm da pontuação (star1Threshold, star2Threshold e barra cheia).")]
         public int parTimeSeconds = 0;
 
-        [Tooltip("Não usado desde a v2.2 (as estrelas vêm de meta, tempo e erros).")]
+        [Tooltip("Fração da meta que dá 1 estrela e passa de fase (0.33 = 1/3 da barra).")]
         [Range(0f, 1f)] public float star1Threshold = 0.33f;
-        [Tooltip("Não usado desde a v2.2 (as estrelas vêm de meta, tempo e erros).")]
+        [Tooltip("Fração da meta que dá 2 estrelas (0.66 = 2/3 da barra).")]
         [Range(0f, 1f)] public float star2Threshold = 0.66f;
-        [Tooltip("Não usado desde a v2.2 (as estrelas vêm de meta, tempo e erros).")]
+        [Tooltip("Não usado: 3 estrelas é sempre a barra cheia (a meta), que também termina a fase.")]
         [Range(0f, 1f)] public float star3Threshold = 1.00f;
 
         [Header("Gold Rewards")]

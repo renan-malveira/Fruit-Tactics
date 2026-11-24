@@ -35,6 +35,6 @@ MonoBehaviour:
   - 0
   - 0
   parTimeSeconds: 65
-  star1Threshold: 0.25
-  star2Threshold: 0.5
+  star1Threshold: 0.33
+  star2Threshold: 0.66
   star3Threshold: 1

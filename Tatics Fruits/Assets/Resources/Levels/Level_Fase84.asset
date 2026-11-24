@@ -15,7 +15,7 @@ MonoBehaviour:
   levelId: fase_84
   displayName: Fase 84
   description: 
-  targetScore: 1600
+  targetScore: 1060
   initialTimeSeconds: 38
   handSize: 9
   deckSize: 64

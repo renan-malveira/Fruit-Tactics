@@ -15,7 +15,7 @@ MonoBehaviour:
   levelId: fase_80
   displayName: Fase 80
   description: 
-  targetScore: 1660
+  targetScore: 1080
   initialTimeSeconds: 40
   handSize: 9
   deckSize: 64

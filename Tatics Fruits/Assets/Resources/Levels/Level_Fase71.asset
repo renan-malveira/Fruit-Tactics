@@ -15,7 +15,7 @@ MonoBehaviour:
   levelId: fase_71
   displayName: Fase 71
   description: 
-  targetScore: 1490
+  targetScore: 1100
   initialTimeSeconds: 45
   handSize: 9
   deckSize: 64

@@ -37,11 +37,11 @@ namespace Core.Services
                     list.Add(new DeckEntrySummary { type = e.type, quantity = e.quantity });
             }
 
-            // Estrelas da v2.2: 1 = meta, 2 = meta dentro do tempo-alvo, 3 = isso sem errar par.
+            // Estrelas pela pontuação: 1/3 da barra, 2/3 e barra cheia (StarRules).
             var levelId = cfg.LevelKey;
-            var s1 = cfg.targetScore;
-            var s2 = cfg.parTimeSeconds > 0 ? cfg.parTimeSeconds : StarRules.FallbackTimeLeftSeconds(cfg);
-            var s3 = 0;
+            var s1 = StarRules.ScoreFor(cfg, 1);
+            var s2 = StarRules.ScoreFor(cfg, 2);
+            var s3 = StarRules.ScoreFor(cfg, 3);
 
             var best = profileService.GetBestScore(levelId);
 

@@ -15,7 +15,7 @@ MonoBehaviour:
   levelId: fase_69
   displayName: Fase 69
   description: 
-  targetScore: 1470
+  targetScore: 1090
   initialTimeSeconds: 45
   handSize: 9
   deckSize: 64

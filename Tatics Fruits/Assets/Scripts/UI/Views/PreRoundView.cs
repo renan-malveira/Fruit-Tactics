@@ -57,11 +57,13 @@ namespace UI.Views
 
             if (objectiveText)
             {
+                // {0} = barra cheia (3 estrelas), {1} = tempo inicial, {2} = 1 estrela (passa de fase).
                 objectiveText.text = Localizer.Instance.TrFormat(
                     "pre_round_objective",
-                    "Faça <b>{0}</b> pontos antes de o tempo acabar! Você começa com <b>{1}</b> segundos.",
+                    "Faça <b>{2}</b> pontos para passar e <b>{0}</b> para as 3 estrelas! Você começa com <b>{1}</b> segundos.",
                     model.targetScore.ToString("N0"),
-                    model.initialTimeSec);
+                    model.initialTimeSec,
+                    model.star1Score.ToString("N0"));
             }
 
             if (bestScoreText)
@@ -74,12 +76,10 @@ namespace UI.Views
                         model.bestScore);
             }
 
-            // Cada estrela mostra o seu critério: meta de pontos, tempo-alvo e "sem erros".
+            // Pontos de cada estrela: 1/3 da barra, 2/3 e barra cheia.
             SetStarLabel(star1ScoreLabel, model.star1Score.ToString("N0"));
-            SetStarLabel(star2ScoreLabel, model.parTimeSeconds > 0
-                ? Localizer.Instance.TrFormat("pre_round_star_time", "Até {0}s", model.star2Score)
-                : Localizer.Instance.TrFormat("pre_round_star_time_left", "{0}s sobrando", model.star2Score));
-            SetStarLabel(star3ScoreLabel, Localizer.Instance.Tr("pre_round_star_perfect", "Sem erros"));
+            SetStarLabel(star2ScoreLabel, model.star2Score.ToString("N0"));
+            SetStarLabel(star3ScoreLabel, model.star3Score.ToString("N0"));
 
             SetStarImmediate(star1, model.bestStars >= 1);
             SetStarImmediate(star2, model.bestStars >= 2);

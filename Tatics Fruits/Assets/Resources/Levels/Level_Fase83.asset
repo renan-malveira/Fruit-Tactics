@@ -15,7 +15,7 @@ MonoBehaviour:
   levelId: fase_83
   displayName: Fase 83
   description: 
-  targetScore: 1590
+  targetScore: 1050
   initialTimeSeconds: 38
   handSize: 9
   deckSize: 64

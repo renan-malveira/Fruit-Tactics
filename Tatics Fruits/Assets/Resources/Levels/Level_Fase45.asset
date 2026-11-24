@@ -15,7 +15,7 @@ MonoBehaviour:
   levelId: fase_45
   displayName: Fase 45
   description: 
-  targetScore: 1280
+  targetScore: 1070
   initialTimeSeconds: 70
   handSize: 7
   deckSize: 60

@@ -92,7 +92,7 @@
   "swap_one_card": "Troque uma carta",
   
   "pre_round_play": "Pronto?",
-  "pre_round_objective": "Faça <b>{0}</b> pontos antes de o tempo acabar! Você começa com <b>{1}</b> segundos.",
+  "pre_round_objective": "Faça <b>{2}</b> pontos para passar e <b>{0}</b> para as 3 estrelas! Você começa com <b>{1}</b> segundos.",
 
   "countdown_3": "PREPARAR",
   "countdown_2": "APONTAR",
@@ -106,6 +106,7 @@
   "combo_legendary": "Lenda!",
   
   "defeat_title_timeup": "Tempo esgotado! Não foi dessa vez.",
+  "defeat_title_out_of_cards": "Acabaram as cartas! Não foi dessa vez.",
   "defeat_score_line": "Você fez: {0} pontos.",
 
   "victory_title": "Vitória!",

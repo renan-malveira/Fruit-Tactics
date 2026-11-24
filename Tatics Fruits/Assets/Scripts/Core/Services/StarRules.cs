@@ -4,39 +4,49 @@ using UnityEngine;
 namespace Core.Services
 {
     /// <summary>
-    /// Estrelas da v2.2 (meta, tempo e erros):
-    /// 1 estrela  = bater a meta de pontos;
-    /// 2 estrelas = bater a meta dentro do tempo-alvo da fase (LevelConfigSo.parTimeSeconds);
-    /// 3 estrelas = as duas coisas sem nenhum par errado.
-    /// Fase sem tempo-alvo (parTimeSeconds = 0) usa "terminar com 25% do tempo inicial sobrando".
+    /// Estrelas pela pontuação:
+    /// 1 estrela  = star1Threshold da meta (1/3 da barra);
+    /// 2 estrelas = star2Threshold da meta (2/3 da barra);
+    /// 3 estrelas = barra cheia (a meta da fase).
+    /// A fase termina na hora com a barra cheia. Com 1 ou 2 estrelas ela continua até acabar
+    /// o tempo ou as cartas e termina em vitória; sem estrela nenhuma, em derrota.
+    /// (Na v2.2 as estrelas vinham de meta, tempo-alvo e erros, e enchiam a barra com 1 estrela.)
     /// </summary>
     public static class StarRules
     {
-        public const float FallbackTimeLeftRatio = 0.25f;
-
-        public static int Evaluate(LevelConfigSo cfg, bool reachedTarget, float elapsedSeconds, int timeLeftSeconds, int mistakes)
+        public static int Evaluate(LevelConfigSo cfg, int totalScore)
         {
-            if (cfg == null || !reachedTarget)
+            if (cfg == null || cfg.targetScore <= 0)
                 return 0;
 
-            if (!MetTimeGoal(cfg, elapsedSeconds, timeLeftSeconds))
-                return 1;
-
-            return mistakes <= 0 ? 3 : 2;
+            if (totalScore >= ScoreFor(cfg, 3)) return 3;
+            if (totalScore >= ScoreFor(cfg, 2)) return 2;
+            if (totalScore >= ScoreFor(cfg, 1)) return 1;
+            return 0;
         }
 
-        public static bool MetTimeGoal(LevelConfigSo cfg, float elapsedSeconds, int timeLeftSeconds)
+        /// <summary>Pontos que acendem a estrela 1, 2 ou 3.</summary>
+        public static int ScoreFor(LevelConfigSo cfg, int star)
         {
             if (cfg == null)
-                return false;
+                return 0;
 
-            if (cfg.parTimeSeconds > 0)
-                return elapsedSeconds <= cfg.parTimeSeconds;
+            var target = Mathf.Max(1, cfg.targetScore);
+            if (star >= 3)
+                return target;
 
-            return timeLeftSeconds >= FallbackTimeLeftSeconds(cfg);
+            var fraction = Mathf.Clamp01(star == 1 ? cfg.star1Threshold : cfg.star2Threshold);
+            // Desconto mínimo para 300 x 0.33 dar 99 (e não 100 por arredondamento de float).
+            return Mathf.Clamp(Mathf.CeilToInt(target * fraction - 0.001f), 1, target);
         }
 
-        public static int FallbackTimeLeftSeconds(LevelConfigSo cfg)
-            => cfg == null ? 0 : Mathf.CeilToInt(cfg.initialTimeSeconds * FallbackTimeLeftRatio);
+        /// <summary>Posição da estrela na barra (0 a 1).</summary>
+        public static float FractionFor(LevelConfigSo cfg, int star)
+        {
+            if (cfg == null || cfg.targetScore <= 0)
+                return star / 3f;
+
+            return ScoreFor(cfg, star) / (float)cfg.targetScore;
+        }
     }
 }

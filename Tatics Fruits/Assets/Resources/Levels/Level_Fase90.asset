@@ -15,7 +15,7 @@ MonoBehaviour:
   levelId: fase_90
   displayName: Fase 90
   description: 
-  targetScore: 1740
+  targetScore: 1060
   initialTimeSeconds: 30
   handSize: 10
   deckSize: 64

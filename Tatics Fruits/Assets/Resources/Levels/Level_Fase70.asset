@@ -15,7 +15,7 @@ MonoBehaviour:
   levelId: fase_70
   displayName: Fase 70
   description: 
-  targetScore: 1570
+  targetScore: 1140
   initialTimeSeconds: 45
   handSize: 9
   deckSize: 64

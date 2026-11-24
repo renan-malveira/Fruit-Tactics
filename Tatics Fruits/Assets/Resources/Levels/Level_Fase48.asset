@@ -15,7 +15,7 @@ MonoBehaviour:
   levelId: fase_48
   displayName: Fase 48
   description: 
-  targetScore: 1300
+  targetScore: 1090
   initialTimeSeconds: 65
   handSize: 7
   deckSize: 60

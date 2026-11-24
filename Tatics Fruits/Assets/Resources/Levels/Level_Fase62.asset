@@ -15,7 +15,7 @@ MonoBehaviour:
   levelId: fase_62
   displayName: Fase 62
   description: 
-  targetScore: 1420
+  targetScore: 1090
   initialTimeSeconds: 50
   handSize: 8
   deckSize: 64

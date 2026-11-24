@@ -15,7 +15,7 @@ MonoBehaviour:
   levelId: fase_44
   displayName: Fase 44
   description: 
-  targetScore: 1270
+  targetScore: 1070
   initialTimeSeconds: 70
   handSize: 7
   deckSize: 60

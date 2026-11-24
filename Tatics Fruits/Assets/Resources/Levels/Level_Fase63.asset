@@ -15,7 +15,7 @@ MonoBehaviour:
   levelId: fase_63
   displayName: Fase 63
   description: 
-  targetScore: 1430
+  targetScore: 1100
   initialTimeSeconds: 50
   handSize: 8
   deckSize: 64

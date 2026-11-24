@@ -15,7 +15,7 @@ MonoBehaviour:
   levelId: fase_78
   displayName: Fase 78
   description: 
-  targetScore: 1550
+  targetScore: 1050
   initialTimeSeconds: 40
   handSize: 9
   deckSize: 64

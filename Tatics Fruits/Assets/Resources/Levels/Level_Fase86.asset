@@ -15,7 +15,7 @@ MonoBehaviour:
   levelId: fase_86
   displayName: Fase 86
   description: 
-  targetScore: 1610
+  targetScore: 1000
   initialTimeSeconds: 35
   handSize: 9
   deckSize: 64

@@ -15,7 +15,7 @@ MonoBehaviour:
   levelId: fase_74
   displayName: Fase 74
   description: 
-  targetScore: 1520
+  targetScore: 1100
   initialTimeSeconds: 42
   handSize: 9
   deckSize: 64

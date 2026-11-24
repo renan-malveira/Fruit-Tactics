@@ -15,7 +15,7 @@ MonoBehaviour:
   levelId: fase_65
   displayName: Fase 65
   description: 
-  targetScore: 1440
+  targetScore: 1100
   initialTimeSeconds: 48
   handSize: 8
   deckSize: 64

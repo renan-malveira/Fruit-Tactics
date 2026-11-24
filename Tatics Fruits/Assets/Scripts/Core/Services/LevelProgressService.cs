@@ -61,9 +61,9 @@ namespace New_GameplayCore.Services
             Save();
         }
 
-        /// <summary>Venceu quem bateu a meta (a fase só termina em vitória quando isso acontece).</summary>
+        /// <summary>Passa de fase quem ganhou pelo menos 1 estrela (1/3 da barra).</summary>
         public bool CanAdvance(LevelConfigSo cfg, int totalScore, float unlockPct = 0.75f)
-            => cfg != null && cfg.targetScore > 0 && totalScore >= cfg.targetScore;
+            => StarRules.Evaluate(cfg, totalScore) >= 1;
 
         /// <summary>
         /// Vitória na fase <paramref name="levelIndex"/>: libera a próxima e já deixa ela como atual,

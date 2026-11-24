@@ -15,7 +15,7 @@ MonoBehaviour:
   levelId: fase_37
   displayName: Fase 37
   description: 
-  targetScore: 1210
+  targetScore: 1010
   initialTimeSeconds: 80
   handSize: 6
   deckSize: 60

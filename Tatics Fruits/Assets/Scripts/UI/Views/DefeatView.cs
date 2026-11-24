@@ -41,7 +41,9 @@ namespace UI.Views
             _presenter = presenter;
 
             if (titleText)
-                titleText.text = Localizer.Instance.Tr("defeat_title_timeup", "Tempo esgotado! Não foi dessa vez.");
+                titleText.text = model.outOfCards
+                    ? Localizer.Instance.Tr("defeat_title_out_of_cards", "Acabaram as cartas! Não foi dessa vez.")
+                    : Localizer.Instance.Tr("defeat_title_timeup", "Tempo esgotado! Não foi dessa vez.");
 
             if (scoreText)
                 scoreText.text = Localizer.Instance.TrFormat("defeat_score_line", "Você fez: {0} pontos.", model.totalScore);

@@ -15,7 +15,7 @@ MonoBehaviour:
   levelId: fase_38
   displayName: Fase 38
   description: 
-  targetScore: 1220
+  targetScore: 1100
   initialTimeSeconds: 80
   handSize: 7
   deckSize: 60

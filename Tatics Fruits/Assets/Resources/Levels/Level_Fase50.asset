@@ -15,7 +15,7 @@ MonoBehaviour:
   levelId: fase_50
   displayName: Fase 50
   description: 
-  targetScore: 1400
+  targetScore: 1080
   initialTimeSeconds: 60
   handSize: 7
   deckSize: 60

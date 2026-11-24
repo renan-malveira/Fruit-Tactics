@@ -31,7 +31,8 @@ namespace Editor
         private const string VersionName = "2.2";
         // 43 foi enviado em 20/11/2026 e barrado na revisão (tela em retrato obrigatória).
         // O Play não aceita repetir uma versionCode já enviada.
-        private const int MinAndroidVersionCode = 44;
+        // 44 já foi enviado; 45 traz a correção da carta que não jogava e das metas das fases.
+        private const int MinAndroidVersionCode = 45;
         private const int AndroidTargetApi = 36;        // exigência do Google Play para atualizações
         // App já publicado na App Store (id6761233443, versão 1.0 de 31/03/2026). Outro bundle ID
         // criaria um app novo em vez de atualizar este.

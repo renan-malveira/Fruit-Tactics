@@ -15,7 +15,7 @@ MonoBehaviour:
   levelId: fase_67
   displayName: Fase 67
   description: 
-  targetScore: 1460
+  targetScore: 1110
   initialTimeSeconds: 48
   handSize: 8
   deckSize: 64

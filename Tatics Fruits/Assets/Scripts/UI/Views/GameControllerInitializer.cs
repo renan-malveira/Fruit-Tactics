@@ -183,16 +183,14 @@ namespace UI.Views
             // quando o jogador sai da tela de resultado (Próxima, Jogar de novo ou Menu).
             InterstitialAdManager.Instance?.RegisterMatchCompleted(LevelNumber);
 
-            switch (cause)
-            {
-                case EndCause.TargetReached:
-                    ShowVictory();
-                    break;
+            // Barra cheia termina a fase na hora (3 estrelas). Quando acaba o tempo ou as cartas,
+            // vence quem chegou a pelo menos 1 estrela (1/3 da barra).
+            var won = cause == EndCause.TargetReached || StarRules.Evaluate(levelConfig, _score.Total) >= 1;
 
-                case EndCause.TimeUp:
-                    ShowDefeat();
-                    break;
-            }
+            if (won)
+                ShowVictory();
+            else
+                ShowDefeat(outOfCards: cause == EndCause.OutOfCards);
 
             OnLevelEnd?.Invoke(cause);
         }
@@ -275,13 +273,14 @@ namespace UI.Views
                 onLeaderboard: () => LeaveTo("MainMenu"));
         }
 
-        private void ShowDefeat()
+        private void ShowDefeat(bool outOfCards)
         {
             var presenter = new DefeatPresenter(levelConfig, _score, _time, _profileService);
 
             DefeatModel model = default;
             presenter.OnModelReady += m => model = m;
             presenter.Build();
+            model.outOfCards = outOfCards;
 
             var view = Instantiate(defeatPrefab, uiRoot);
             view.Bind(presenter, model);
@@ -297,7 +296,7 @@ namespace UI.Views
                 LevelNumber,
                 _score.Total,
                 _time.ElapsedSeconds,
-                "time_up"
+                outOfCards ? "out_of_cards" : "time_up"
             );
         }
 

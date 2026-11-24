@@ -15,7 +15,7 @@ MonoBehaviour:
   levelId: fase_89
   displayName: Fase 89
   description: 
-  targetScore: 1640
+  targetScore: 1020
   initialTimeSeconds: 33
   handSize: 10
   deckSize: 64

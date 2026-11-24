@@ -46,7 +46,7 @@ namespace Core.Services
             var levelId = _cfg.LevelKey;
             var levelIndex = _progress.CurrentIndex;
 
-            var stars = StarRules.Evaluate(_cfg, true, _time.ElapsedSeconds, _time.TimeLeftSeconds, _mistakes);
+            var stars = StarRules.Evaluate(_cfg, total);
 
             // Lê o recorde e as estrelas ANTES de gravar o resultado novo.
             var previousBest = _profileService.GetBestScore(levelId);

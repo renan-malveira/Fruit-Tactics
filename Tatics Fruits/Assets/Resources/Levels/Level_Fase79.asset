@@ -15,7 +15,7 @@ MonoBehaviour:
   levelId: fase_79
   displayName: Fase 79
   description: 
-  targetScore: 1560
+  targetScore: 1040
   initialTimeSeconds: 40
   handSize: 9
   deckSize: 64
