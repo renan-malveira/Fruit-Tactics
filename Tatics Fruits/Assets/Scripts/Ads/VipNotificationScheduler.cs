@@ -1,8 +1,9 @@
 using System;
-using Unity.Notifications.Android;
 using UnityEngine;
 
-#if UNITY_IOS
+#if UNITY_ANDROID
+using Unity.Notifications.Android;
+#elif UNITY_IOS
 using Unity.Notifications.iOS;
 #endif
 
